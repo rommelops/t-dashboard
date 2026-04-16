@@ -5,13 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My School Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
-
-<!-- Firebase -->
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&family=Comic+Neue:wght@400;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+  import { getFirestore, doc, setDoc, collection, getDocs, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   const firebaseConfig = {
     apiKey: "AIzaSyDJIEjfC01LYMqm3k4lkN_-KylLcEtytIc",
     authDomain: "t-dashboard-493420.firebaseapp.com",
@@ -20,416 +17,292 @@
     messagingSenderId: "689567256263",
     appId: "1:689567256263:web:8deaf93b32ee7f23a678e2"
   };
-
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-
-  // Expose db and firebase functions globally
   window._db = db;
-  window._firebase = { doc, getDoc, setDoc, collection, getDocs, addDoc, deleteDoc, query, orderBy };
+  window._firebase = { doc, setDoc, collection, getDocs, addDoc, deleteDoc };
   window._firebaseReady = true;
   document.dispatchEvent(new Event('firebaseReady'));
 </script>
-
 <style>
-  :root {
-    --bg: #f0f4ff;
-    --card: #ffffff;
-    --primary: #5b6af5;
-    --primary-light: #eef0ff;
-    --primary-dark: #3a4be0;
-    --accent-yellow: #ffd166;
-    --accent-green: #06d6a0;
-    --accent-pink: #ef476f;
-    --accent-blue: #118ab2;
-    --accent-orange: #f4845f;
-    --accent-purple: #9b59b6;
-    --text: #1a1a2e;
-    --text-muted: #6b7280;
-    --border: #e2e8f0;
-    --shadow: 0 4px 0px rgba(0,0,0,0.10);
-    --shadow-lg: 0 8px 0px rgba(0,0,0,0.10);
-    --radius: 18px;
-    --radius-sm: 10px;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'Nunito', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
-
-  /* ── PIN SCREEN ── */
-  #pin-screen {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 20px;
-  }
-
-  .pin-card {
-    background: white;
-    border-radius: 28px;
-    padding: 48px 40px;
-    max-width: 380px;
-    width: 100%;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    text-align: center;
-  }
-
-  .pin-emoji { font-size: 64px; margin-bottom: 16px; display: block; animation: bounce 2s infinite; }
-  @keyframes bounce { 0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)} }
-  @keyframes shake { 0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)} }
-
-  .pin-title { font-family: 'Fredoka One', sans-serif; font-size: 32px; color: var(--primary); margin-bottom: 6px; }
-  .pin-subtitle { color: var(--text-muted); font-size: 15px; margin-bottom: 32px; font-weight: 600; }
-
-  .pin-dots { display: flex; justify-content: center; gap: 14px; margin-bottom: 28px; }
-  .pin-dot { width: 22px; height: 22px; border-radius: 50%; border: 3px solid #ddd; background: white; transition: all 0.2s; }
-  .pin-dot.filled { background: var(--primary); border-color: var(--primary); transform: scale(1.1); }
-
-  .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .pin-key { background: var(--primary-light); border: 3px solid transparent; border-radius: 14px; padding: 18px 10px; font-family: 'Fredoka One', sans-serif; font-size: 24px; color: var(--primary); cursor: pointer; transition: all 0.1s; user-select: none; }
-  .pin-key:hover { background: var(--primary); color: white; transform: translateY(-2px); }
-  .pin-key:active { transform: translateY(1px); }
-  .pin-key.del { background: #fff0f3; color: var(--accent-pink); font-size: 18px; }
-  .pin-key.del:hover { background: var(--accent-pink); color: white; }
-  .pin-key.empty { visibility: hidden; }
-  .pin-error { color: var(--accent-pink); font-weight: 700; font-size: 14px; margin-top: 12px; min-height: 20px; }
-  .pin-hint { margin-top: 20px; font-size: 12px; color: #bbb; font-weight: 600; }
-
-  /* ── APP ── */
-  #app { display: none; }
-
-  .header {
-    background: white;
-    border-bottom: 3px solid var(--border);
-    padding: 0 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 70px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-
-  .header-logo { font-family: 'Fredoka One', sans-serif; font-size: 26px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-  .header-right { display: flex; align-items: center; gap: 12px; }
-
-  .sync-status { font-size: 13px; font-weight: 700; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
-  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green); }
-  .sync-dot.syncing { background: var(--accent-yellow); animation: pulse 1s infinite; }
-  .sync-dot.error { background: var(--accent-pink); }
-  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
-
-  .icon-btn { background: var(--primary-light); color: var(--primary); border: none; border-radius: var(--radius-sm); padding: 8px 14px; font-family: 'Nunito', sans-serif; font-weight: 800; cursor: pointer; font-size: 13px; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
-  .icon-btn:hover { background: var(--primary); color: white; }
-
-  .main-layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 70px); }
-
-  .sidebar { background: white; border-right: 3px solid var(--border); padding: 24px 16px; display: flex; flex-direction: column; gap: 6px; }
-
-  .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 700; font-size: 15px; color: var(--text-muted); transition: all 0.2s; border: 3px solid transparent; user-select: none; }
-  .nav-item:hover { background: var(--primary-light); color: var(--primary); }
-  .nav-item.active { background: var(--primary); color: white; box-shadow: var(--shadow); }
-  .nav-icon { font-size: 20px; width: 24px; text-align: center; }
-  .nav-badge { margin-left: auto; background: var(--accent-pink); color: white; border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 800; }
-  .nav-section-label { font-size: 11px; font-weight: 800; color: #ccc; text-transform: uppercase; letter-spacing: 1px; padding: 12px 16px 4px; }
-
-  .content { padding: 28px; overflow-y: auto; }
-  .page { display: none; }
-  .page.active { display: block; }
-  .page-title { font-family: 'Fredoka One', sans-serif; font-size: 30px; color: var(--text); margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
-
-  /* Cards */
-  .card { background: white; border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
-  .card-title { font-family: 'Fredoka One', sans-serif; font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-
-  /* Buttons */
-  .btn { background: var(--primary); color: white; border: none; border-radius: var(--radius-sm); padding: 10px 20px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 14px; cursor: pointer; box-shadow: 0 3px 0 var(--primary-dark); transition: all 0.1s; }
-  .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 0 var(--primary-dark); }
-  .btn:active { transform: translateY(2px); box-shadow: none; }
-  .btn.green { background: var(--accent-green); box-shadow: 0 3px 0 #04a87f; }
-  .btn.green:hover { box-shadow: 0 4px 0 #04a87f; }
-  .btn.pink { background: var(--accent-pink); box-shadow: 0 3px 0 #c02250; }
-
-  /* Inputs */
-  .field-input { border: 3px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); outline: none; transition: border 0.2s; background: white; }
-  .field-input:focus { border-color: var(--primary); }
-
-  /* Empty state */
-  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
-  .empty-state-emoji { font-size: 48px; display: block; margin-bottom: 12px; }
-  .empty-state p { font-weight: 700; }
-
-  /* ── DASHBOARD ── */
-  .welcome-banner { background: linear-gradient(135deg, var(--primary) 0%, #7b8ff7 100%); border-radius: var(--radius); padding: 28px 32px; color: white; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow-lg); }
-  .welcome-text h2 { font-family: 'Fredoka One', sans-serif; font-size: 28px; margin-bottom: 4px; }
-  .welcome-text p { font-size: 15px; opacity: 0.85; font-weight: 600; }
-  .welcome-emoji { font-size: 72px; line-height: 1; }
-
-  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-  .stat-card { background: white; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border-bottom: 4px solid var(--accent-green); text-align: center; }
-  .stat-card:nth-child(2){border-color:var(--accent-yellow)}
-  .stat-card:nth-child(3){border-color:var(--accent-pink)}
-  .stat-card:nth-child(4){border-color:var(--accent-blue)}
-  .stat-number { font-family: 'Fredoka One', sans-serif; font-size: 36px; color: var(--text); line-height: 1; }
-  .stat-label { font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
-
-  /* ── CALENDAR ── */
-  .cal-config { background: linear-gradient(135deg, #fff3cd, #ffe69c); border: 3px solid var(--accent-yellow); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 24px; }
-  .cal-config h3 { font-weight: 800; margin-bottom: 4px; }
-  .cal-config p { font-size: 13px; color: #666; margin-bottom: 12px; }
-  .config-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-
-  .cal-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-  .month-title { font-family: 'Fredoka One', sans-serif; font-size: 24px; flex: 1; }
-  .nav-arrow { background: white; border: 3px solid var(--border); border-radius: var(--radius-sm); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; font-weight: 900; color: var(--primary); transition: all 0.2s; }
-  .nav-arrow:hover { background: var(--primary); color: white; border-color: var(--primary); }
-
-  .cal-grid { background: white; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
-  .cal-header-row { display: grid; grid-template-columns: repeat(7,1fr); background: var(--primary); color: white; }
-  .cal-day-name { text-align: center; padding: 12px; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .cal-body { display: grid; grid-template-columns: repeat(7,1fr); border-top: 1px solid var(--border); }
-  .cal-cell { min-height: 90px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 8px; cursor: pointer; transition: background 0.15s; position: relative; }
-  .cal-cell:hover { background: var(--primary-light); }
-  .cal-cell.other-month { background: #f9fafb; }
-  .cal-cell.other-month .cal-day-num { color: #ccc; }
-  .cal-cell.today { background: #fffbeb; }
-  .cal-day-num { font-weight: 800; font-size: 14px; color: var(--text); margin-bottom: 4px; }
-  .cal-day-num.today-num { background: var(--primary); color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; }
-  .cal-event-pill { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 6px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
-
-  /* Subject colors */
-  .s-ela      { background:#fce7f3; color:#9d174d; }
-  .s-math     { background:#dbeafe; color:#1e40af; }
-  .s-science  { background:#d1fae5; color:#065f46; }
-  .s-social   { background:#fef3c7; color:#92400e; }
-  .s-french   { background:#ede9fe; color:#5b21b6; }
-  .s-relarts  { background:#fce8d5; color:#9a3412; }
-  .s-other    { background:#f3f4f6; color:#374151; }
-
-  /* Type badges */
-  .t-homework   { background:#fee2e2; color:#991b1b; }
-  .t-assessment { background:#fef3c7; color:#92400e; }
-  .t-project    { background:#d1fae5; color:#065f46; }
-  .t-reminder   { background:#ede9fe; color:#5b21b6; }
-
-  /* Priority */
-  .p-high   { color: var(--accent-pink); font-weight: 800; }
-  .p-medium { color: var(--accent-yellow); font-weight: 800; }
-  .p-low    { color: var(--text-muted); font-weight: 700; }
-
-  /* ── HOMEWORK ── */
-  .hw-add-row { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
-  .hw-list { display: flex; flex-direction: column; gap: 10px; }
-  .hw-item { background: white; border-radius: var(--radius-sm); padding: 16px 18px; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow); border-left: 5px solid var(--accent-green); transition: all 0.2s; }
-  .hw-item.done { opacity: 0.5; }
-  .hw-item.done .hw-task { text-decoration: line-through; }
-  .hw-check { width: 24px; height: 24px; border: 3px solid var(--border); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; transition: all 0.2s; }
-  .hw-check.checked { background: var(--accent-green); border-color: var(--accent-green); color: white; }
-  .hw-task { font-weight: 700; flex: 1; font-size: 14px; }
-  .hw-badge { font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; }
-  .hw-due { font-size: 12px; color: var(--text-muted); font-weight: 700; white-space: nowrap; }
-  .hw-source { font-size: 10px; color: #ccc; font-weight: 700; }
-  .hw-delete { background: none; border: none; cursor: pointer; color: #ddd; font-size: 18px; transition: color 0.2s; padding: 0 4px; }
-  .hw-delete:hover { color: var(--accent-pink); }
-
-  /* ── MOOD ── */
-  .mood-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; margin-bottom: 16px; }
-  .mood-btn { background: white; border: 3px solid var(--border); border-radius: var(--radius); padding: 18px 10px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow); }
-  .mood-btn:hover { border-color: var(--primary); transform: translateY(-3px); }
-  .mood-btn.selected { border-color: var(--primary); background: var(--primary-light); transform: translateY(-3px); }
-  .mood-emoji { font-size: 36px; display: block; margin-bottom: 6px; }
-  .mood-label { font-size: 12px; font-weight: 800; color: var(--text-muted); }
-  .focus-wrap { background: white; border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
-  .focus-labels { display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; }
-  input[type=range] { width:100%; height:8px; border-radius:4px; appearance:none; background:linear-gradient(to right,var(--accent-pink),var(--accent-yellow),var(--accent-green)); outline:none; cursor:pointer; margin-bottom:12px; }
-  input[type=range]::-webkit-slider-thumb { appearance:none; width:28px; height:28px; border-radius:50%; background:white; border:3px solid var(--primary); box-shadow:0 2px 8px rgba(0,0,0,0.2); cursor:pointer; }
-  .focus-value { text-align:center; font-family:'Fredoka One',sans-serif; font-size:48px; color:var(--primary); line-height:1; }
-  .mood-log { display:flex; flex-direction:column; gap:10px; max-height:300px; overflow-y:auto; }
-  .mood-entry { background:white; border-radius:var(--radius-sm); padding:14px 18px; display:flex; align-items:center; gap:14px; box-shadow:var(--shadow); font-size:14px; }
-  .mood-entry-emoji { font-size:24px; }
-  .mood-entry-info { flex:1; }
-  .mood-entry-date { font-size:12px; color:var(--text-muted); font-weight:700; }
-  .mood-entry-focus { font-size:12px; font-weight:800; color:var(--primary); }
-
-  /* ── REMINDERS ── */
-  .reminder-list { display:flex; flex-direction:column; gap:10px; }
-  .reminder-item { background:white; border-radius:var(--radius-sm); padding:16px 18px; display:flex; align-items:center; gap:14px; box-shadow:var(--shadow); border-left:5px solid var(--accent-yellow); }
-  .reminder-item.high { border-color:var(--accent-pink); }
-  .reminder-item.low { border-color:var(--accent-blue); }
-  .reminder-info { flex:1; }
-  .reminder-title { font-weight:800; font-size:15px; }
-  .reminder-time { font-size:12px; color:var(--text-muted); font-weight:700; margin-top:2px; }
-  .reminder-delete { background:none; border:none; cursor:pointer; color:#ddd; font-size:18px; transition:color 0.2s; }
-  .reminder-delete:hover { color:var(--accent-pink); }
-
-  /* ── PROGRESS ── */
-  .subject-progress { display:flex; flex-direction:column; gap:16px; }
-  .progress-card { background:white; border-radius:var(--radius); padding:20px 24px; box-shadow:var(--shadow); }
-  .progress-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-  .progress-name { font-weight:800; font-size:16px; }
-  .progress-score { font-family:'Fredoka One',sans-serif; font-size:22px; }
-  .progress-bar-bg { background:#f3f4f6; border-radius:20px; height:14px; overflow:hidden; }
-  .progress-bar-fill { height:100%; border-radius:20px; transition:width 1s ease; }
-  .progress-detail { font-size:12px; color:var(--text-muted); font-weight:700; margin-top:8px; }
-
-  /* ── NOTES ── */
-  .notes-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
-  .note-card { background:white; border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); border-top:5px solid var(--accent-yellow); min-height:140px; display:flex; flex-direction:column; transition:all 0.2s; }
-  .note-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-lg); }
-  .note-card:nth-child(2){border-color:var(--accent-green)}
-  .note-card:nth-child(3){border-color:var(--accent-pink)}
-  .note-card:nth-child(4){border-color:var(--accent-blue)}
-  .note-title { font-weight:800; font-size:14px; margin-bottom:8px; }
-  .note-preview { font-size:13px; color:var(--text-muted); flex:1; line-height:1.5; }
-  .note-date { font-size:11px; color:#ccc; font-weight:700; margin-top:12px; }
-
-  /* ── SETTINGS ── */
-  .settings-section { background:white; border-radius:var(--radius); padding:24px; box-shadow:var(--shadow); margin-bottom:20px; }
-  .settings-title { font-family:'Fredoka One',sans-serif; font-size:18px; margin-bottom:16px; }
-  .settings-row { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
-  .settings-label { font-weight:800; font-size:13px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; }
-  .settings-hint { font-size:12px; color:#aaa; font-weight:600; margin-top:4px; }
-
-  /* ── MODAL ── */
-  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; padding:20px; }
-  .modal-overlay.open { display:flex; }
-  .modal { background:white; border-radius:var(--radius); padding:28px; max-width:480px; width:100%; max-height:80vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
-  .modal-title { font-family:'Fredoka One',sans-serif; font-size:22px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; }
-  .modal-close { background:#f3f4f6; border:none; border-radius:8px; width:32px; height:32px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-  .event-detail { background:var(--primary-light); border-radius:12px; padding:16px; margin-bottom:12px; }
-  .event-detail-row { display:flex; gap:10px; padding:6px 0; font-size:14px; border-bottom:1px solid rgba(0,0,0,0.06); }
-  .event-detail-row:last-child { border-bottom:none; }
-  .event-label { font-weight:800; color:var(--text-muted); min-width:80px; font-size:13px; }
-
-  /* Responsive */
-  @media(max-width:768px){
-    .main-layout{grid-template-columns:1fr}
-    .sidebar{display:none}
-    .stats-row{grid-template-columns:repeat(2,1fr)}
-    .two-col{grid-template-columns:1fr}
-    .mood-grid{grid-template-columns:repeat(3,1fr)}
-  }
+:root {
+  --bg:#f0f4ff; --card:#fff; --primary:#5b6af5; --primary-light:#eef0ff; --primary-dark:#3a4be0;
+  --yellow:#ffd166; --green:#06d6a0; --pink:#ef476f; --blue:#118ab2; --orange:#f4845f;
+  --text:#1a1a2e; --muted:#6b7280; --border:#e2e8f0;
+  --sh:0 4px 0px rgba(0,0,0,0.10); --shlg:0 8px 0px rgba(0,0,0,0.10);
+  --r:18px; --rs:10px;
+  --fs:14px; --fslg:16px; --fsxl:19px;
+  --font:'Nunito',sans-serif;
+}
+body.sz-normal{--fs:14px;--fslg:16px;--fsxl:19px}
+body.sz-large{--fs:17px;--fslg:20px;--fsxl:24px}
+body.sz-xlarge{--fs:20px;--fslg:24px;--fsxl:28px}
+body.fn-nunito{--font:'Nunito',sans-serif}
+body.fn-comic{--font:'Comic Neue',cursive}
+body.fn-atkinson{--font:'Atkinson Hyperlegible',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:var(--fs)}
+/* PIN */
+#pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:linear-gradient(135deg,#667eea,#764ba2)}
+.pin-card{background:#fff;border-radius:28px;padding:48px 40px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}
+.pin-emoji{font-size:64px;margin-bottom:16px;display:block;animation:bounce 2s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+.pin-title{font-family:'Fredoka One',sans-serif;font-size:32px;color:var(--primary);margin-bottom:6px}
+.pin-subtitle{color:var(--muted);font-size:15px;margin-bottom:16px;font-weight:600}
+.pin-who{display:flex;gap:8px;justify-content:center;margin-bottom:24px;flex-wrap:wrap}
+.pin-who-btn{padding:8px 16px;border-radius:20px;border:3px solid var(--border);background:#fff;font-family:var(--font);font-weight:800;font-size:13px;cursor:pointer;transition:all .2s;color:var(--muted)}
+.pin-who-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.pin-who-btn.teacher-active{background:#0f766e;color:#fff;border-color:#0f766e}
+.pin-dots{display:flex;justify-content:center;gap:14px;margin-bottom:28px}
+.pin-dot{width:22px;height:22px;border-radius:50%;border:3px solid #ddd;background:#fff;transition:all .2s}
+.pin-dot.filled{background:var(--primary);border-color:var(--primary);transform:scale(1.1)}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pin-key{background:var(--primary-light);border:3px solid transparent;border-radius:14px;padding:18px 10px;font-family:'Fredoka One',sans-serif;font-size:24px;color:var(--primary);cursor:pointer;transition:all .1s;user-select:none}
+.pin-key:hover{background:var(--primary);color:#fff;transform:translateY(-2px)}
+.pin-key:active{transform:translateY(1px)}
+.pin-key.del{background:#fff0f3;color:var(--pink);font-size:18px}
+.pin-key.del:hover{background:var(--pink);color:#fff}
+.pin-key.empty{visibility:hidden}
+.pin-error{color:var(--pink);font-weight:700;font-size:14px;margin-top:12px;min-height:20px}
+.pin-hint{margin-top:16px;font-size:12px;color:#bbb;font-weight:600}
+/* APP */
+#app{display:none}
+.header{background:#fff;border-bottom:3px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:70px;position:sticky;top:0;z-index:100}
+.header-logo{font-family:'Fredoka One',sans-serif;font-size:26px;color:var(--primary);display:flex;align-items:center;gap:8px}
+.header-right{display:flex;align-items:center;gap:10px}
+.role-badge{font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;background:var(--primary-light);color:var(--primary);text-transform:uppercase;letter-spacing:.5px}
+.role-badge.parent{background:#fff3cd;color:#856404}
+.role-badge.teacher{background:#ccfbf1;color:#0f766e}
+.sync-status{font-size:13px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:6px}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.sync-dot.syncing{background:var(--yellow);animation:pulse 1s infinite}
+.sync-dot.error{background:var(--pink)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.icon-btn{background:var(--primary-light);color:var(--primary);border:none;border-radius:var(--rs);padding:8px 14px;font-family:var(--font);font-weight:800;cursor:pointer;font-size:13px;transition:all .2s}
+.icon-btn:hover{background:var(--primary);color:#fff}
+.main-layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 70px)}
+.sidebar{background:#fff;border-right:3px solid var(--border);padding:24px 16px;display:flex;flex-direction:column;gap:6px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:var(--rs);cursor:pointer;font-weight:700;font-size:var(--fs);color:var(--muted);transition:all .2s;border:3px solid transparent;user-select:none}
+.nav-item:hover{background:var(--primary-light);color:var(--primary)}
+.nav-item.active{background:var(--primary);color:#fff;box-shadow:var(--sh)}
+.nav-icon{font-size:20px;width:24px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--pink);color:#fff;border-radius:20px;padding:2px 8px;font-size:11px;font-weight:800}
+.nav-lbl{font-size:11px;font-weight:800;color:#ccc;text-transform:uppercase;letter-spacing:1px;padding:12px 16px 4px}
+.content{padding:28px;overflow-y:auto}
+.page{display:none}.page.active{display:block}
+.page-title{font-family:'Fredoka One',sans-serif;font-size:30px;color:var(--text);margin-bottom:24px;display:flex;align-items:center;gap:10px}
+.card{background:#fff;border-radius:var(--r);padding:22px;box-shadow:var(--sh)}
+.card-title{font-family:'Fredoka One',sans-serif;font-size:18px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.btn{background:var(--primary);color:#fff;border:none;border-radius:var(--rs);padding:10px 20px;font-family:var(--font);font-weight:800;font-size:var(--fs);cursor:pointer;box-shadow:0 3px 0 var(--primary-dark);transition:all .1s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 0 var(--primary-dark)}
+.btn:active{transform:translateY(2px);box-shadow:none}
+.btn.green{background:var(--green);box-shadow:0 3px 0 #04a87f}
+.btn.green:hover{box-shadow:0 4px 0 #04a87f}
+.fi{border:3px solid var(--border);border-radius:var(--rs);padding:10px 14px;font-family:var(--font);font-weight:700;font-size:var(--fs);color:var(--text);outline:none;transition:border .2s;background:#fff}
+.fi:focus{border-color:var(--primary)}
+.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-icon{font-size:48px;display:block;margin-bottom:12px}
+.empty p{font-weight:700;font-size:var(--fs)}
+/* Dashboard */
+.welcome-banner{background:linear-gradient(135deg,var(--primary),#7b8ff7);border-radius:var(--r);padding:28px 32px;color:#fff;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shlg)}
+.welcome-text h2{font-family:'Fredoka One',sans-serif;font-size:28px;margin-bottom:4px}
+.welcome-text p{font-size:var(--fs);opacity:.85;font-weight:600}
+.welcome-emoji{font-size:72px;line-height:1}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:var(--r);padding:20px;box-shadow:var(--sh);border-bottom:4px solid var(--green);text-align:center}
+.stat-card:nth-child(2){border-color:var(--yellow)}.stat-card:nth-child(3){border-color:var(--pink)}.stat-card:nth-child(4){border-color:var(--blue)}
+.stat-num{font-family:'Fredoka One',sans-serif;font-size:36px;color:var(--text);line-height:1}
+.stat-lbl{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+/* Calendar */
+.cal-nav{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.month-title{font-family:'Fredoka One',sans-serif;font-size:24px;flex:1}
+.nav-arr{background:#fff;border:3px solid var(--border);border-radius:var(--rs);width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:900;color:var(--primary);transition:all .2s}
+.nav-arr:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+.cal-grid{background:#fff;border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.cal-hdr{display:grid;grid-template-columns:repeat(7,1fr);background:var(--primary);color:#fff}
+.cal-dname{text-align:center;padding:12px;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.5px}
+.cal-body{display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--border)}
+.cal-cell{min-height:110px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px;cursor:pointer;transition:background .15s;overflow:hidden}
+.cal-cell:hover{background:var(--primary-light)}
+.cal-cell.other-m{background:#f9fafb}
+.cal-cell.other-m .cal-dnum{color:#ccc}
+.cal-cell.today-c{background:#fffbeb}
+.cal-dnum{font-weight:800;font-size:14px;color:var(--text);margin-bottom:4px}
+.cal-dnum.today-n{background:var(--primary);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px}
+.pill{font-size:10px;font-weight:700;padding:3px 6px;border-radius:6px;margin-bottom:3px;cursor:pointer;line-height:1.4;white-space:normal;word-break:break-word}
+.s-ela{background:#fce7f3;color:#9d174d}.s-math{background:#dbeafe;color:#1e40af}.s-sci{background:#d1fae5;color:#065f46}
+.s-ss{background:#fef3c7;color:#92400e}.s-fr{background:#ede9fe;color:#5b21b6}.s-ra{background:#fce8d5;color:#9a3412}.s-oth{background:#f3f4f6;color:#374151}
+.t-hw{background:#fee2e2;color:#991b1b}.t-as{background:#fef3c7;color:#92400e}.t-pr{background:#d1fae5;color:#065f46}.t-re{background:#ede9fe;color:#5b21b6}
+/* Homework */
+.hw-add-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.hw-note{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:16px;padding:10px 14px;background:var(--primary-light);border-radius:var(--rs)}
+.hw-list{display:flex;flex-direction:column;gap:10px}
+.hw-item{background:#fff;border-radius:var(--rs);padding:16px 18px;display:flex;align-items:flex-start;gap:14px;box-shadow:var(--sh);border-left:5px solid var(--green)}
+.hw-item.done{opacity:.5}.hw-item.done .hw-task{text-decoration:line-through}
+.hw-chk{width:24px;height:24px;border:3px solid var(--border);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:all .2s;margin-top:2px}
+.hw-chk.checked{background:var(--green);border-color:var(--green);color:#fff}
+.hw-main{flex:1;display:flex;flex-direction:column;gap:5px}
+.hw-task{font-weight:700;font-size:var(--fs);line-height:1.4}
+.hw-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hw-bdg{font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;text-transform:uppercase;white-space:nowrap}
+.hw-due{font-size:12px;color:var(--muted);font-weight:700}
+.hw-src{font-size:10px;color:#bbb;font-weight:700}
+.hw-notes{font-size:12px;color:var(--muted);font-style:italic;line-height:1.5}
+.hw-del{background:none;border:none;cursor:pointer;color:#ddd;font-size:18px;transition:color .2s;padding:0 4px;flex-shrink:0}
+.hw-del:hover{color:var(--pink)}
+/* Mood */
+.mood-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+.mood-btn{background:#fff;border:3px solid var(--border);border-radius:var(--r);padding:18px 10px;text-align:center;cursor:pointer;transition:all .2s;box-shadow:var(--sh)}
+.mood-btn:hover{border-color:var(--primary);transform:translateY(-3px)}
+.mood-btn.sel{border-color:var(--primary);background:var(--primary-light);transform:translateY(-3px)}
+.mood-em{font-size:36px;display:block;margin-bottom:6px}
+.mood-lbl{font-size:12px;font-weight:800;color:var(--muted)}
+.focus-wrap{background:#fff;border-radius:var(--r);padding:22px;box-shadow:var(--sh)}
+.focus-lbls{display:flex;justify-content:space-between;font-size:12px;font-weight:800;color:var(--muted);margin-bottom:8px}
+input[type=range]{width:100%;height:8px;border-radius:4px;appearance:none;background:linear-gradient(to right,var(--pink),var(--yellow),var(--green));outline:none;cursor:pointer;margin-bottom:12px}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;border:3px solid var(--primary);box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
+.focus-val{text-align:center;font-family:'Fredoka One',sans-serif;font-size:48px;color:var(--primary);line-height:1}
+.mood-log{display:flex;flex-direction:column;gap:10px;max-height:300px;overflow-y:auto}
+.mood-entry{background:#fff;border-radius:var(--rs);padding:14px 18px;display:flex;align-items:center;gap:14px;box-shadow:var(--sh)}
+.me-em{font-size:24px}.me-info{flex:1}.me-date{font-size:12px;color:var(--muted);font-weight:700}.me-focus{font-size:12px;font-weight:800;color:var(--primary)}
+/* Reminders */
+.rem-list{display:flex;flex-direction:column;gap:10px}
+.rem-item{background:#fff;border-radius:var(--rs);padding:16px 18px;display:flex;align-items:center;gap:14px;box-shadow:var(--sh);border-left:5px solid var(--yellow)}
+.rem-item.high{border-color:var(--pink)}.rem-item.low{border-color:var(--blue)}
+.rem-info{flex:1}.rem-title{font-weight:800;font-size:var(--fs)}.rem-time{font-size:12px;color:var(--muted);font-weight:700;margin-top:2px}
+.rem-del{background:none;border:none;cursor:pointer;color:#ddd;font-size:18px;transition:color .2s}
+.rem-del:hover{color:var(--pink)}
+/* Progress */
+.prog-list{display:flex;flex-direction:column;gap:16px}
+.prog-card{background:#fff;border-radius:var(--r);padding:20px 24px;box-shadow:var(--sh)}
+.prog-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.prog-name{font-weight:800;font-size:var(--fslg)}.prog-score{font-family:'Fredoka One',sans-serif;font-size:22px}
+.prog-bg{background:#f3f4f6;border-radius:20px;height:14px;overflow:hidden}
+.prog-fill{height:100%;border-radius:20px;transition:width 1s ease}
+.prog-det{font-size:12px;color:var(--muted);font-weight:700;margin-top:8px}
+/* Notes */
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.note-card{background:#fff;border-radius:var(--r);padding:20px;box-shadow:var(--sh);border-top:5px solid var(--yellow);min-height:140px;display:flex;flex-direction:column;transition:all .2s}
+.note-card:hover{transform:translateY(-3px);box-shadow:var(--shlg)}
+.note-card:nth-child(2){border-color:var(--green)}.note-card:nth-child(3){border-color:var(--pink)}.note-card:nth-child(4){border-color:var(--blue)}
+.note-title{font-weight:800;font-size:var(--fs);margin-bottom:8px}
+.note-prev{font-size:13px;color:var(--muted);flex:1;line-height:1.5}
+.note-date{font-size:11px;color:#ccc;font-weight:700;margin-top:12px}
+/* Settings */
+.set-sec{background:#fff;border-radius:var(--r);padding:24px;box-shadow:var(--sh);margin-bottom:20px}
+.set-title{font-family:'Fredoka One',sans-serif;font-size:20px;margin-bottom:16px}
+.set-row{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+.set-lbl{font-weight:800;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.set-hint{font-size:12px;color:#aaa;font-weight:600;margin-top:2px}
+.opt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.opt-btn{border:3px solid var(--border);border-radius:var(--rs);padding:14px 10px;text-align:center;cursor:pointer;transition:all .2s;background:#fff;font-weight:700;font-size:13px;line-height:1.5}
+.opt-btn:hover{border-color:var(--primary)}
+.opt-btn.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
+.role-banner{border-radius:var(--rs);padding:12px 16px;font-weight:700;font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.role-banner.parent-b{background:#fff3cd;color:#856404}
+.role-banner.teacher-b{background:#ccfbf1;color:#0f766e}
+/* Modal */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.modal-ov.open{display:flex}
+.modal{background:#fff;border-radius:var(--r);padding:28px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-title{font-family:'Fredoka One',sans-serif;font-size:22px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.modal-close{background:#f3f4f6;border:none;border-radius:8px;width:32px;height:32px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.ev-detail{background:var(--primary-light);border-radius:12px;padding:16px;margin-bottom:12px}
+.ev-row{display:flex;gap:10px;padding:7px 0;font-size:var(--fs);border-bottom:1px solid rgba(0,0,0,.06);align-items:flex-start}
+.ev-row:last-child{border-bottom:none}
+.ev-lbl{font-weight:800;color:var(--muted);min-width:80px;font-size:13px;flex-shrink:0}
+/* Teacher read-only overlay */
+.teacher-ro-badge{background:#ccfbf1;color:#0f766e;font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;margin-left:8px;text-transform:uppercase;letter-spacing:.5px}
+@media(max-width:768px){.main-layout{grid-template-columns:1fr}.sidebar{display:none}.stats-row{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.mood-grid{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
-<body>
+<body class="fn-nunito sz-normal">
 
 <!-- PIN SCREEN -->
 <div id="pin-screen">
   <div class="pin-card">
-    <span class="pin-emoji">🎒</span>
-    <h1 class="pin-title" id="pin-dashboard-name">My Dashboard</h1>
-    <p class="pin-subtitle">Enter your 4-digit PIN to get started!</p>
+    <span class="pin-emoji">&#127890;</span>
+    <h1 class="pin-title" id="pin-title">My Dashboard</h1>
+    <p class="pin-subtitle">Who's logging in?</p>
+    <div class="pin-who">
+      <button class="pin-who-btn active" onclick="setWho('student')">&#127890; Student</button>
+      <button class="pin-who-btn" onclick="setWho('parent')">&#128106; Parent</button>
+      <button class="pin-who-btn" onclick="setWho('teacher')">&#127979; Teacher</button>
+    </div>
     <div class="pin-dots">
-      <div class="pin-dot" id="dot-0"></div>
-      <div class="pin-dot" id="dot-1"></div>
-      <div class="pin-dot" id="dot-2"></div>
-      <div class="pin-dot" id="dot-3"></div>
+      <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
     </div>
     <div class="pin-keypad">
-      <button class="pin-key" onclick="pinPress('1')">1</button>
-      <button class="pin-key" onclick="pinPress('2')">2</button>
-      <button class="pin-key" onclick="pinPress('3')">3</button>
-      <button class="pin-key" onclick="pinPress('4')">4</button>
-      <button class="pin-key" onclick="pinPress('5')">5</button>
-      <button class="pin-key" onclick="pinPress('6')">6</button>
-      <button class="pin-key" onclick="pinPress('7')">7</button>
-      <button class="pin-key" onclick="pinPress('8')">8</button>
-      <button class="pin-key" onclick="pinPress('9')">9</button>
-      <button class="pin-key empty"></button>
-      <button class="pin-key" onclick="pinPress('0')">0</button>
-      <button class="pin-key del" onclick="pinDelete()">⌫</button>
+      <button class="pin-key" onclick="pp('1')">1</button><button class="pin-key" onclick="pp('2')">2</button><button class="pin-key" onclick="pp('3')">3</button>
+      <button class="pin-key" onclick="pp('4')">4</button><button class="pin-key" onclick="pp('5')">5</button><button class="pin-key" onclick="pp('6')">6</button>
+      <button class="pin-key" onclick="pp('7')">7</button><button class="pin-key" onclick="pp('8')">8</button><button class="pin-key" onclick="pp('9')">9</button>
+      <button class="pin-key empty"></button><button class="pin-key" onclick="pp('0')">0</button><button class="pin-key del" onclick="pd()">&#9003;</button>
     </div>
-    <div class="pin-error" id="pin-error"></div>
-    <p class="pin-hint">Default PIN: 1234</p>
+    <div class="pin-error" id="pin-err"></div>
+    <p class="pin-hint" id="pin-hint">Student default PIN: 1234</p>
   </div>
 </div>
 
-<!-- MAIN APP -->
+<!-- APP -->
 <div id="app">
   <header class="header">
-    <div class="header-logo">🎒 <span id="header-name">My Dashboard</span></div>
+    <div class="header-logo">&#127890; <span id="hdr-name">My Dashboard</span></div>
     <div class="header-right">
-      <div class="sync-status">
-        <div class="sync-dot" id="sync-dot"></div>
-        <span id="sync-text">Ready</span>
-      </div>
-      <button class="icon-btn" onclick="syncSheets()">🔄 Sync</button>
-      <button class="icon-btn" onclick="logout()">🔒 Lock</button>
+      <span class="role-badge" id="role-badge">Student</span>
+      <div class="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-txt">Ready</span></div>
+      <button class="icon-btn" onclick="syncSheets()">&#128260; Sync</button>
+      <button class="icon-btn" onclick="logout()">&#128274; Lock</button>
     </div>
   </header>
-
   <div class="main-layout">
     <nav class="sidebar">
-      <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">🏠</span> Home</div>
-      <div class="nav-item" onclick="showPage('calendar',this)"><span class="nav-icon">📅</span> Calendar</div>
-      <div class="nav-item" onclick="showPage('homework',this)">
-        <span class="nav-icon">📚</span> Homework
-        <span class="nav-badge" id="hw-badge">0</span>
-      </div>
-      <div class="nav-section-label">Track Me</div>
-      <div class="nav-item" onclick="showPage('mood',this)"><span class="nav-icon">😊</span> Mood & Focus</div>
-      <div class="nav-item" onclick="showPage('reminders',this)"><span class="nav-icon">⏰</span> Reminders</div>
-      <div class="nav-item" onclick="showPage('progress',this)"><span class="nav-icon">📈</span> Progress</div>
-      <div class="nav-section-label">More</div>
-      <div class="nav-item" onclick="showPage('notes',this)"><span class="nav-icon">📝</span> Teacher Notes</div>
-      <div class="nav-item" onclick="showPage('settings',this)"><span class="nav-icon">⚙️</span> Settings</div>
+      <div class="nav-item active" onclick="showPage('home',this)"><span class="nav-icon">&#127968;</span> Home</div>
+      <div class="nav-item" onclick="showPage('calendar',this)"><span class="nav-icon">&#128197;</span> Calendar</div>
+      <div class="nav-item" onclick="showPage('homework',this)"><span class="nav-icon">&#128218;</span> Homework <span class="nav-badge" id="hw-badge">0</span></div>
+      <div class="nav-lbl">Track Me</div>
+      <div class="nav-item" onclick="showPage('mood',this)"><span class="nav-icon">&#128522;</span> Mood &amp; Focus</div>
+      <div class="nav-item" onclick="showPage('reminders',this)"><span class="nav-icon">&#9200;</span> Reminders</div>
+      <div class="nav-item" onclick="showPage('progress',this)"><span class="nav-icon">&#128200;</span> Progress</div>
+      <div class="nav-lbl">More</div>
+      <div class="nav-item" onclick="showPage('notes',this)"><span class="nav-icon">&#128221;</span> Teacher Notes</div>
+      <div class="nav-item" onclick="showPage('settings',this)"><span class="nav-icon">&#9881;</span> Settings</div>
     </nav>
-
     <main class="content">
 
-      <!-- DASHBOARD -->
-      <div class="page active" id="page-dashboard">
+      <!-- HOME -->
+      <div class="page active" id="page-home">
         <div class="welcome-banner">
-          <div class="welcome-text">
-            <h2 id="welcome-greeting">Good morning! 👋</h2>
-            <p id="welcome-date"></p>
-          </div>
-          <div class="welcome-emoji" id="welcome-emoji">😊</div>
+          <div class="welcome-text"><h2 id="greet">Good morning!</h2><p id="greet-date"></p></div>
+          <div class="welcome-emoji" id="greet-emoji">&#128522;</div>
         </div>
         <div class="stats-row">
-          <div class="stat-card"><div class="stat-number" id="stat-due-today">0</div><div class="stat-label">Due Today</div></div>
-          <div class="stat-card"><div class="stat-number" id="stat-total-hw">0</div><div class="stat-label">Total Tasks</div></div>
-          <div class="stat-card"><div class="stat-number" id="stat-done">0</div><div class="stat-label">Completed ✓</div></div>
-          <div class="stat-card"><div class="stat-number" id="stat-streak">🔥0</div><div class="stat-label">Mood Streak</div></div>
+          <div class="stat-card"><div class="stat-num" id="s-today">0</div><div class="stat-lbl">Due Today</div></div>
+          <div class="stat-card"><div class="stat-num" id="s-total">0</div><div class="stat-lbl">Total Tasks</div></div>
+          <div class="stat-card"><div class="stat-num" id="s-done">0</div><div class="stat-lbl">Completed</div></div>
+          <div class="stat-card"><div class="stat-num" id="s-streak">&#128293;0</div><div class="stat-lbl">Mood Streak</div></div>
         </div>
         <div class="two-col">
-          <div class="card">
-            <div class="card-title">📚 Due Today</div>
-            <div id="dashboard-hw-list"><div class="empty-state"><span class="empty-state-emoji">🎉</span><p>Nothing due today!</p></div></div>
-          </div>
-          <div class="card">
-            <div class="card-title">⏰ Reminders</div>
-            <div id="dashboard-reminders-list"><div class="empty-state"><span class="empty-state-emoji">✅</span><p>No reminders</p></div></div>
-          </div>
+          <div class="card"><div class="card-title">&#128218; Due Today</div><div id="dash-hw"><div class="empty"><span class="empty-icon">&#127881;</span><p>Nothing due today!</p></div></div></div>
+          <div class="card"><div class="card-title">&#9200; Reminders</div><div id="dash-rem"><div class="empty"><span class="empty-icon">&#9989;</span><p>No reminders</p></div></div></div>
         </div>
       </div>
 
       <!-- CALENDAR -->
       <div class="page" id="page-calendar">
-        <div class="page-title">📅 Calendar</div>
+        <div class="page-title">&#128197; Calendar</div>
         <div class="cal-nav">
-          <button class="nav-arrow" onclick="changeMonth(-1)">‹</button>
-          <div class="month-title" id="cal-month-title"></div>
-          <button class="nav-arrow" onclick="changeMonth(1)">›</button>
-          <button class="btn" style="margin-left:auto" onclick="syncSheets()">🔄 Sync Planner</button>
+          <button class="nav-arr" onclick="changeMonth(-1)">&#8249;</button>
+          <div class="month-title" id="cal-title"></div>
+          <button class="nav-arr" onclick="changeMonth(1)">&#8250;</button>
+          <button class="btn" style="margin-left:auto" onclick="syncSheets()">&#128260; Sync Planner</button>
         </div>
         <div class="cal-grid">
-          <div class="cal-header-row">
-            <div class="cal-day-name">Sun</div><div class="cal-day-name">Mon</div>
-            <div class="cal-day-name">Tue</div><div class="cal-day-name">Wed</div>
-            <div class="cal-day-name">Thu</div><div class="cal-day-name">Fri</div>
-            <div class="cal-day-name">Sat</div>
+          <div class="cal-hdr">
+            <div class="cal-dname">Sun</div><div class="cal-dname">Mon</div><div class="cal-dname">Tue</div>
+            <div class="cal-dname">Wed</div><div class="cal-dname">Thu</div><div class="cal-dname">Fri</div><div class="cal-dname">Sat</div>
           </div>
           <div class="cal-body" id="cal-body"></div>
         </div>
@@ -437,134 +310,151 @@
 
       <!-- HOMEWORK -->
       <div class="page" id="page-homework">
-        <div class="page-title">📚 Homework Tracker</div>
-        <div class="hw-add-row">
-          <input type="text" class="field-input" id="hw-task-input" placeholder="Add your own task..." style="flex:1;min-width:180px" />
-          <select class="field-input" id="hw-subject-select">
-            <option value="ELA">📖 ELA</option>
-            <option value="Math">📐 Math</option>
-            <option value="Science">🔬 Science</option>
-            <option value="Social Studies">🌍 Social Studies</option>
-            <option value="French">🇫🇷 French</option>
-            <option value="Related Arts">🎨 Related Arts</option>
-            <option value="Other">📌 Other</option>
-          </select>
-          <input type="date" class="field-input" id="hw-due-input" />
-          <button class="btn green" onclick="addHomework()">+ Add</button>
-        </div>
-        <div id="hw-source-note" style="font-size:13px;color:var(--text-muted);font-weight:700;margin-bottom:16px;padding:10px 14px;background:var(--primary-light);border-radius:var(--radius-sm);">
-          📅 Assignments from your teacher's planner appear automatically. You can also add your own above.
+        <div class="page-title">&#128218; Homework Tracker <span id="hw-ro-badge" style="display:none" class="teacher-ro-badge">View Only</span></div>
+        <div id="hw-add-section">
+          <div class="hw-add-row">
+            <input type="text" class="fi" id="hw-txt" placeholder="Add your own task..." style="flex:1;min-width:180px"/>
+            <select class="fi" id="hw-subj">
+              <option value="ELA">&#128214; ELA</option><option value="Math">&#128208; Math</option>
+              <option value="Science">&#128300; Science</option><option value="Social Studies">&#127758; Social Studies</option>
+              <option value="French">&#127467;&#127479; French</option><option value="Related Arts">&#127912; Related Arts</option>
+              <option value="Other">&#128204; Other</option>
+            </select>
+            <input type="date" class="fi" id="hw-due"/>
+            <button class="btn green" onclick="addHW()">+ Add</button>
+          </div>
+          <div class="hw-note">&#128197; Assignments from your teacher's planner appear automatically. You can also add your own tasks above.</div>
         </div>
         <div class="hw-list" id="hw-list"></div>
       </div>
 
       <!-- MOOD -->
       <div class="page" id="page-mood">
-        <div class="page-title">😊 Mood & Focus</div>
+        <div class="page-title">&#128522; Mood &amp; Focus <span id="mood-ro-badge" style="display:none" class="teacher-ro-badge">View Only</span></div>
         <div class="card" style="margin-bottom:20px">
-          <div class="card-title">How are you feeling?</div>
+          <div class="card-title">How are you feeling right now?</div>
           <div class="mood-grid">
-            <div class="mood-btn" onclick="selectMood('amazing','😄',this)"><span class="mood-emoji">😄</span><div class="mood-label">Amazing</div></div>
-            <div class="mood-btn" onclick="selectMood('good','😊',this)"><span class="mood-emoji">😊</span><div class="mood-label">Good</div></div>
-            <div class="mood-btn" onclick="selectMood('okay','😐',this)"><span class="mood-emoji">😐</span><div class="mood-label">Okay</div></div>
-            <div class="mood-btn" onclick="selectMood('meh','😕',this)"><span class="mood-emoji">😕</span><div class="mood-label">Meh</div></div>
-            <div class="mood-btn" onclick="selectMood('rough','😢',this)"><span class="mood-emoji">😢</span><div class="mood-label">Rough</div></div>
+            <div class="mood-btn" onclick="selMood('amazing','&#128516;',this)"><span class="mood-em">&#128516;</span><div class="mood-lbl">Amazing</div></div>
+            <div class="mood-btn" onclick="selMood('good','&#128522;',this)"><span class="mood-em">&#128522;</span><div class="mood-lbl">Good</div></div>
+            <div class="mood-btn" onclick="selMood('okay','&#128528;',this)"><span class="mood-em">&#128528;</span><div class="mood-lbl">Okay</div></div>
+            <div class="mood-btn" onclick="selMood('meh','&#128533;',this)"><span class="mood-em">&#128533;</span><div class="mood-lbl">Meh</div></div>
+            <div class="mood-btn" onclick="selMood('rough','&#128546;',this)"><span class="mood-em">&#128546;</span><div class="mood-lbl">Rough</div></div>
           </div>
         </div>
         <div class="focus-wrap" style="margin-bottom:20px">
-          <div class="card-title">🎯 Focus Level</div>
-          <div class="focus-labels"><span>😵 Super Distracted</span><span>🎯 Laser Focused</span></div>
-          <input type="range" id="focus-slider" min="0" max="100" value="50" step="1" oninput="document.getElementById('focus-value').textContent=this.value" />
-          <div class="focus-value" id="focus-value">50</div>
+          <div class="card-title">&#127919; Focus Level Today</div>
+          <div class="focus-lbls"><span>&#128565; Super Distracted</span><span>&#127919; Laser Focused</span></div>
+          <input type="range" id="focus-slider" min="0" max="100" value="50" step="1" oninput="document.getElementById('focus-val').textContent=this.value"/>
+          <div class="focus-val" id="focus-val">50</div>
         </div>
-        <button class="btn green" onclick="saveMoodEntry()" style="margin-bottom:20px">💾 Save Today's Entry</button>
-        <div class="card">
-          <div class="card-title">📊 Recent Entries</div>
-          <div class="mood-log" id="mood-log"></div>
-        </div>
+        <div id="mood-save-section"><button class="btn green" onclick="saveMood()" style="margin-bottom:20px">&#128190; Save Today's Entry</button></div>
+        <div class="card"><div class="card-title">&#128202; Recent Entries</div><div class="mood-log" id="mood-log"></div></div>
       </div>
 
       <!-- REMINDERS -->
       <div class="page" id="page-reminders">
-        <div class="page-title">⏰ Reminders</div>
-        <div class="hw-add-row">
-          <input type="text" class="field-input" id="rem-text-input" placeholder="What do you need to remember?" style="flex:1;min-width:200px" />
-          <select class="field-input" id="rem-priority">
-            <option value="high">🔴 Important</option>
-            <option value="medium" selected>🟡 Normal</option>
-            <option value="low">🔵 Low</option>
-          </select>
-          <input type="datetime-local" class="field-input" id="rem-time-input" />
-          <button class="btn green" onclick="addReminder()">+ Add</button>
+        <div class="page-title">&#9200; Reminders <span id="rem-ro-badge" style="display:none" class="teacher-ro-badge">View Only</span></div>
+        <div id="rem-add-section">
+          <div class="hw-add-row">
+            <input type="text" class="fi" id="rem-txt" placeholder="What do you need to remember?" style="flex:1;min-width:200px"/>
+            <select class="fi" id="rem-pri"><option value="high">&#128308; Important</option><option value="medium" selected>&#128993; Normal</option><option value="low">&#128309; Low</option></select>
+            <input type="datetime-local" class="fi" id="rem-time"/>
+            <button class="btn green" onclick="addRem()">+ Add</button>
+          </div>
         </div>
-        <div class="reminder-list" id="reminder-list"></div>
+        <div class="rem-list" id="rem-list"></div>
       </div>
 
       <!-- PROGRESS -->
       <div class="page" id="page-progress">
-        <div class="page-title">📈 My Progress</div>
-        <div class="card" style="margin-bottom:20px">
-          <div class="card-title">🏆 Overall</div>
-          <div id="progress-overall" style="font-family:'Fredoka One',sans-serif;font-size:22px;color:var(--primary)">Complete some homework to see your progress!</div>
-        </div>
-        <div class="subject-progress" id="subject-progress"></div>
+        <div class="page-title">&#128200; My Progress</div>
+        <div class="card" style="margin-bottom:20px"><div class="card-title">&#127942; Overall</div><div id="prog-overall" style="font-family:'Fredoka One',sans-serif;font-size:22px;color:var(--primary)">Complete some homework to see your progress!</div></div>
+        <div class="prog-list" id="prog-list"></div>
       </div>
 
       <!-- NOTES -->
       <div class="page" id="page-notes">
-        <div class="page-title">📝 Teacher Notes</div>
-        <div class="notes-grid" id="notes-grid">
-          <div class="empty-state" style="grid-column:1/-1"><span class="empty-state-emoji">📝</span><p>Sync the planner to see teacher notes here!</p></div>
-        </div>
+        <div class="page-title">&#128221; Teacher Notes</div>
+        <div class="notes-grid" id="notes-grid"><div class="empty" style="grid-column:1/-1"><span class="empty-icon">&#128221;</span><p>Sync the planner to see notes here!</p></div></div>
       </div>
 
       <!-- SETTINGS -->
       <div class="page" id="page-settings">
-        <div class="page-title">⚙️ Settings</div>
+        <div class="page-title">&#9881; Settings</div>
 
-        <div class="settings-section">
-          <div class="settings-title">👤 Profile</div>
-          <div class="settings-row">
-            <div class="settings-label">Dashboard Name</div>
-            <div style="display:flex;gap:10px">
-              <input type="text" class="field-input" id="settings-name" placeholder="e.g. Alex's Dashboard" style="flex:1" />
-              <button class="btn green" onclick="saveName()">Save</button>
+        <!-- Display prefs — all roles -->
+        <div class="set-sec">
+          <div class="set-title">&#127912; Display Preferences</div>
+          <div class="set-row">
+            <div class="set-lbl">Font Style</div>
+            <div class="opt-grid">
+              <div class="opt-btn active" id="btn-fn-nunito" onclick="setFont('nunito',this)" style="font-family:'Nunito',sans-serif">Nunito<br><span style="font-size:11px;opacity:.6">Rounded &amp; friendly</span></div>
+              <div class="opt-btn" id="btn-fn-comic" onclick="setFont('comic',this)" style="font-family:'Comic Neue',cursive">Comic Neue<br><span style="font-size:11px;opacity:.6">Fun &amp; casual</span></div>
+              <div class="opt-btn" id="btn-fn-atkinson" onclick="setFont('atkinson',this)" style="font-family:'Atkinson Hyperlegible',sans-serif">Atkinson<br><span style="font-size:11px;opacity:.6">Easy to read</span></div>
             </div>
-            <div class="settings-hint">This name appears on the login screen and header.</div>
+            <div class="set-hint">Atkinson Hyperlegible is designed for maximum readability — recommended for ADHD and dyslexia.</div>
+          </div>
+          <div class="set-row">
+            <div class="set-lbl">Text Size</div>
+            <div class="opt-grid">
+              <div class="opt-btn active" id="btn-sz-normal" onclick="setSize('normal',this)">Normal<br><span style="font-size:11px;opacity:.6">Default</span></div>
+              <div class="opt-btn" id="btn-sz-large" onclick="setSize('large',this)" style="font-size:16px">Large<br><span style="font-size:11px;opacity:.6">A bit bigger</span></div>
+              <div class="opt-btn" id="btn-sz-xlarge" onclick="setSize('xlarge',this)" style="font-size:19px">Extra Large<br><span style="font-size:11px;opacity:.6">Biggest</span></div>
+            </div>
           </div>
         </div>
 
-        <div class="settings-section">
-          <div class="settings-title">🔐 Change PIN</div>
-          <div class="settings-row">
-            <div class="settings-label">Current PIN</div>
-            <input type="password" class="field-input" id="settings-current-pin" placeholder="Enter current PIN" maxlength="4" style="max-width:200px" />
-          </div>
-          <div class="settings-row">
-            <div class="settings-label">New PIN</div>
-            <input type="password" class="field-input" id="settings-new-pin" placeholder="Enter new 4-digit PIN" maxlength="4" style="max-width:200px" />
-          </div>
-          <div class="settings-row">
-            <div class="settings-label">Confirm New PIN</div>
-            <input type="password" class="field-input" id="settings-confirm-pin" placeholder="Confirm new PIN" maxlength="4" style="max-width:200px" />
-          </div>
-          <button class="btn" onclick="changePin()">Update PIN</button>
-          <div id="pin-change-msg" style="margin-top:10px;font-weight:700;font-size:14px"></div>
+        <!-- Teacher view — calendar and notes only notice -->
+        <div id="teacher-settings-note" style="display:none">
+          <div class="role-banner teacher-b">&#127979; Teacher view is read-only. You can see the calendar, homework list, and teacher notes, but cannot change any settings or see API keys.</div>
         </div>
 
-        <div class="settings-section">
-          <div class="settings-title">📊 Google Sheets Sync</div>
-          <div class="settings-row">
-            <div class="settings-label">Sheet ID</div>
-            <input type="text" class="field-input" id="settings-sheet-id" style="width:100%" />
-            <div class="settings-hint">Found in the Google Sheets URL: spreadsheets/d/<strong>THIS_PART</strong>/edit</div>
+        <!-- Parent-only settings -->
+        <div id="parent-settings" style="display:none">
+          <div class="role-banner parent-b">&#128274; Parent-only settings — hidden from student and teacher logins</div>
+
+          <div class="set-sec">
+            <div class="set-title">&#128100; Profile</div>
+            <div class="set-row">
+              <div class="set-lbl">Dashboard Name</div>
+              <div style="display:flex;gap:10px"><input type="text" class="fi" id="set-name" placeholder="e.g. Alex's Dashboard" style="flex:1"/><button class="btn green" onclick="saveName()">Save</button></div>
+              <div class="set-hint">Appears on the login screen and in the header.</div>
+            </div>
           </div>
-          <div class="settings-row">
-            <div class="settings-label">Google API Key</div>
-            <input type="password" class="field-input" id="settings-api-key" style="width:100%" />
+
+          <div class="set-sec">
+            <div class="set-title">&#128274; Manage PINs</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+              <div>
+                <div style="font-weight:800;font-size:14px;margin-bottom:12px;color:var(--primary)">&#127890; Student PIN</div>
+                <div class="set-row"><div class="set-lbl">New PIN</div><input type="password" class="fi" id="new-st-pin" placeholder="4 digits" maxlength="4"/></div>
+                <div class="set-row"><div class="set-lbl">Confirm</div><input type="password" class="fi" id="con-st-pin" placeholder="4 digits" maxlength="4"/></div>
+                <button class="btn" onclick="changePin('student')">Update</button>
+                <div id="st-pin-msg" style="margin-top:8px;font-weight:700;font-size:13px"></div>
+              </div>
+              <div>
+                <div style="font-weight:800;font-size:14px;margin-bottom:12px;color:#856404">&#128106; Parent PIN</div>
+                <div class="set-row"><div class="set-lbl">Current PIN</div><input type="password" class="fi" id="cur-pa-pin" placeholder="4 digits" maxlength="4"/></div>
+                <div class="set-row"><div class="set-lbl">New PIN</div><input type="password" class="fi" id="new-pa-pin" placeholder="4 digits" maxlength="4"/></div>
+                <button class="btn" onclick="changePin('parent')">Update</button>
+                <div id="pa-pin-msg" style="margin-top:8px;font-weight:700;font-size:13px"></div>
+              </div>
+              <div>
+                <div style="font-weight:800;font-size:14px;margin-bottom:12px;color:#0f766e">&#127979; Teacher PIN</div>
+                <div class="set-row"><div class="set-lbl">New PIN</div><input type="password" class="fi" id="new-tc-pin" placeholder="4 digits" maxlength="4"/></div>
+                <div class="set-row"><div class="set-lbl">Confirm</div><input type="password" class="fi" id="con-tc-pin" placeholder="4 digits" maxlength="4"/></div>
+                <button class="btn" onclick="changePin('teacher')">Update</button>
+                <div id="tc-pin-msg" style="margin-top:8px;font-weight:700;font-size:13px"></div>
+              </div>
+            </div>
           </div>
-          <button class="btn green" onclick="saveSheetConfig()">Save & Sync</button>
-          <div id="sheet-config-msg" style="margin-top:10px;font-weight:700;font-size:14px"></div>
+
+          <div class="set-sec">
+            <div class="set-title">&#128202; Google Sheets Connection</div>
+            <div class="set-row"><div class="set-lbl">Sheet ID</div><input type="text" class="fi" id="set-sheet-id" style="width:100%"/><div class="set-hint">From the Google Sheets URL: spreadsheets/d/<strong>THIS_PART</strong>/edit — no API key needed, sheet must be shared as "Anyone with the link can view".</div></div>
+            <button class="btn green" onclick="saveSheetConfig()">Save &amp; Sync</button>
+            <div id="sheet-msg" style="margin-top:10px;font-weight:700;font-size:14px"></div>
+          </div>
         </div>
       </div>
 
@@ -572,721 +462,416 @@
   </div>
 </div>
 
-<!-- Event Modal -->
-<div class="modal-overlay" id="event-modal">
+<!-- MODAL -->
+<div class="modal-ov" id="ev-modal">
   <div class="modal">
-    <div class="modal-title">
-      <span id="modal-date-title">📅 Details</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div id="modal-content"></div>
+    <div class="modal-title"><span id="modal-title-txt">&#128197; Details</span><button class="modal-close" onclick="closeModal()">&#10005;</button></div>
+    <div id="modal-body"></div>
   </div>
 </div>
 
 <script>
-// ══════════════════════════════════════
-// CONFIG
-// ══════════════════════════════════════
-const SHEET_ID_DEFAULT  = '10VyvPxVKXRM3fbg5b3sy2MANACKP-ehp3OFEbei2dMQ';
-const API_KEY_DEFAULT   = 'AIzaSyDufWsk-Hye21ojMs7RVEC_ZuO4neMrM0s';
-const FIREBASE_USER_ID  = 'student_main'; // single student, no auth needed
+const SHEET_ID_DEFAULT='10VyvPxVKXRM3fbg5b3sy2MANACKP-ehp3OFEbei2dMQ';
+const FID='student_main';
 
-// ══════════════════════════════════════
-// STATE
-// ══════════════════════════════════════
-let PIN           = localStorage.getItem('dashboard_pin') || '1234';
-let pinEntry      = '';
-let calYear, calMonth;
-let calEvents     = {};   // { 'YYYY-MM-DD': [entries] }
-let homework      = [];   // from Firebase
-let moodLog       = [];
-let reminders     = [];
-let currentMood   = null;
-let currentMoodEmoji = null;
-let studentName   = localStorage.getItem('student_name') || 'My Dashboard';
+let PINS={student:localStorage.getItem('pin_student')||'1234',parent:localStorage.getItem('pin_parent')||'9999',teacher:localStorage.getItem('pin_teacher')||'5678'};
+let role='student',pinBuf='';
+let calY,calM,calEv={},hw=[],moodL=[],rems=[];
+let curMood=null,curMoodEm=null;
 
-// ══════════════════════════════════════
-// WAIT FOR FIREBASE
-// ══════════════════════════════════════
-function waitForFirebase(cb) {
-  if (window._firebaseReady) { cb(); }
-  else { document.addEventListener('firebaseReady', cb, { once: true }); }
+function wfb(cb){if(window._firebaseReady)cb();else document.addEventListener('firebaseReady',cb,{once:true});}
+
+function setWho(r){
+  role=r;
+  document.querySelectorAll('.pin-who-btn').forEach(b=>b.classList.remove('active','teacher-active'));
+  const idx={student:0,parent:1,teacher:2}[r];
+  const cls=r==='teacher'?'teacher-active':'active';
+  document.querySelectorAll('.pin-who-btn')[idx].classList.add(cls);
+  const hints={student:'Student default PIN: 1234',parent:'Parent default PIN: 9999',teacher:'Teacher default PIN: 5678'};
+  document.getElementById('pin-hint').textContent=hints[r];
+  pinBuf='';updDots();document.getElementById('pin-err').textContent='';
 }
-
-// ══════════════════════════════════════
-// PIN
-// ══════════════════════════════════════
-function pinPress(digit) {
-  if (pinEntry.length >= 4) return;
-  pinEntry += digit;
-  updatePinDots();
-  if (pinEntry.length === 4) setTimeout(checkPin, 200);
-}
-
-function pinDelete() {
-  pinEntry = pinEntry.slice(0, -1);
-  updatePinDots();
-  document.getElementById('pin-error').textContent = '';
-}
-
-function updatePinDots() {
-  for (let i = 0; i < 4; i++)
-    document.getElementById(`dot-${i}`).classList.toggle('filled', i < pinEntry.length);
-}
-
-function checkPin() {
-  if (pinEntry === PIN) {
-    document.getElementById('pin-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
+function pp(d){if(pinBuf.length>=4)return;pinBuf+=d;updDots();if(pinBuf.length===4)setTimeout(checkPin,200);}
+function pd(){pinBuf=pinBuf.slice(0,-1);updDots();document.getElementById('pin-err').textContent='';}
+function updDots(){for(let i=0;i<4;i++)document.getElementById('d'+i).classList.toggle('filled',i<pinBuf.length);}
+function checkPin(){
+  if(pinBuf===PINS[role]){
+    document.getElementById('pin-screen').style.display='none';
+    document.getElementById('app').style.display='block';
     initApp();
-  } else {
-    document.getElementById('pin-error').textContent = '❌ Wrong PIN, try again!';
-    pinEntry = '';
-    updatePinDots();
-    const card = document.querySelector('.pin-card');
-    card.style.animation = 'none';
-    card.offsetHeight;
-    card.style.animation = 'shake 0.4s ease';
+  }else{
+    document.getElementById('pin-err').textContent='Wrong PIN, try again!';
+    pinBuf='';updDots();
+    const c=document.querySelector('.pin-card');c.style.animation='none';c.offsetHeight;c.style.animation='shake 0.4s ease';
   }
 }
+function logout(){pinBuf='';updDots();document.getElementById('pin-err').textContent='';document.getElementById('pin-screen').style.display='flex';document.getElementById('app').style.display='none';}
 
-function logout() {
-  pinEntry = '';
-  updatePinDots();
-  document.getElementById('pin-error').textContent = '';
-  document.getElementById('pin-screen').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
-}
+document.addEventListener('keydown',function(e){
+  if(document.getElementById('pin-screen').style.display==='none')return;
+  if(e.key>='0'&&e.key<='9')pp(e.key);
+  else if(e.key==='Backspace')pd();
+  else if(e.key==='Enter'&&pinBuf.length===4)checkPin();
+});
 
-// ══════════════════════════════════════
-// INIT
-// ══════════════════════════════════════
-function initApp() {
-  const now = new Date();
-  calYear  = now.getFullYear();
-  calMonth = now.getMonth();
-
-  // Apply saved name
-  applyName();
-
-  // Greet
-  const hr = now.getHours();
-  const greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
-  document.getElementById('welcome-greeting').textContent = `${greet}! 👋`;
-  document.getElementById('welcome-date').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-
-  // Default due date
-  document.getElementById('hw-due-input').value = now.toISOString().split('T')[0];
-
-  // Populate settings fields
-  document.getElementById('settings-name').value = studentName === 'My Dashboard' ? '' : studentName;
-  document.getElementById('settings-sheet-id').value = localStorage.getItem('sheet_id') || SHEET_ID_DEFAULT;
-  document.getElementById('settings-api-key').value = localStorage.getItem('api_key') || API_KEY_DEFAULT;
-
-  // Load cached calendar events
-  const cached = localStorage.getItem('calEvents');
-  if (cached) calEvents = JSON.parse(cached);
-
-  waitForFirebase(() => {
-    loadFromFirebase();
-    syncSheets();
+function initApp(){
+  const now=new Date();calY=now.getFullYear();calM=now.getMonth();
+  applyName();applyPrefs();
+  // Role badge
+  const rb=document.getElementById('role-badge');
+  const roleLabels={student:'Student',parent:'Parent',teacher:'Teacher'};
+  rb.textContent=roleLabels[role];
+  rb.className='role-badge'+(role==='parent'?' parent':role==='teacher'?' teacher':'');
+  // Show/hide role-specific sections
+  document.getElementById('parent-settings').style.display=role==='parent'?'block':'none';
+  document.getElementById('teacher-settings-note').style.display=role==='teacher'?'block':'none';
+  // Teacher read-only badges
+  ['hw','mood','rem'].forEach(id=>{
+    const el=document.getElementById(id+'-ro-badge');
+    if(el)el.style.display=role==='teacher'?'inline-block':'none';
   });
-}
-
-function applyName() {
-  studentName = localStorage.getItem('student_name') || 'My Dashboard';
-  document.getElementById('header-name').textContent = studentName;
-  document.getElementById('pin-dashboard-name').textContent = studentName;
-}
-
-// ══════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════
-function showPage(page, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById(`page-${page}`).classList.add('active');
-  el.classList.add('active');
-  if (page === 'progress') renderProgress();
-}
-
-// ══════════════════════════════════════
-// GOOGLE SHEETS SYNC
-// ══════════════════════════════════════
-async function syncSheets() {
-  const sheetId = localStorage.getItem('sheet_id') || SHEET_ID_DEFAULT;
-  const apiKey  = localStorage.getItem('api_key')  || API_KEY_DEFAULT;
-  if (!sheetId || !apiKey) return;
-
-  setSyncStatus('syncing', 'Syncing...');
-  try {
-    // Fetch sheet as CSV (simpler and more reliable than Sheets API v4 for tables)
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A:G?key=${apiKey}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const rows = data.values || [];
-    if (rows.length < 2) throw new Error('Sheet appears empty');
-
-    parseSheetRows(rows);
-    setSyncStatus('ok', '✅ Synced');
-    renderCalendar();
-    renderHomeworkList();
-    renderNotes();
-    updateDashboard();
-  } catch (e) {
-    setSyncStatus('error', '❌ Sync failed');
-    console.error('Sheets sync error:', e);
+  // Hide add sections for teacher
+  ['hw-add-section','mood-save-section','rem-add-section'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.style.display=role==='teacher'?'none':'block';
+  });
+  // Greeting
+  const hr=now.getHours();
+  document.getElementById('greet').textContent=(hr<12?'Good morning':hr<17?'Good afternoon':'Good evening')+' &#128075;';
+  document.getElementById('greet-date').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('hw-due').value=now.toISOString().split('T')[0];
+  // Parent: populate settings fields
+  if(role==='parent'){
+    document.getElementById('set-name').value=localStorage.getItem('student_name')||'';
+    document.getElementById('set-sheet-id').value=localStorage.getItem('sheet_id')||SHEET_ID_DEFAULT;
   }
+  const cached=localStorage.getItem('calEv');if(cached)calEv=JSON.parse(cached);
+  wfb(()=>{loadFB();syncSheets();});
 }
 
-function parseSheetRows(rows) {
-  // Row 0 = headers
-  const headers = rows[0].map(h => h.toLowerCase().trim());
-  const idx = {
-    date:       headers.indexOf('date'),
-    subject:    headers.indexOf('subject'),
-    type:       headers.indexOf('type'),
-    assignment: headers.indexOf('assignment'),
-    due_date:   headers.indexOf('due_date'),
-    priority:   headers.indexOf('priority'),
-    notes:      headers.indexOf('notes'),
-  };
+function applyName(){
+  const n=localStorage.getItem('student_name')||'My Dashboard';
+  document.getElementById('hdr-name').textContent=n;
+  document.getElementById('pin-title').textContent=n;
+}
+function applyPrefs(){
+  const fn=localStorage.getItem('pf')||'nunito';const sz=localStorage.getItem('ps')||'normal';
+  applyFn(fn);applySz(sz);
+  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('active'));
+  const fb=document.getElementById('btn-fn-'+fn);const sb=document.getElementById('btn-sz-'+sz);
+  if(fb)fb.classList.add('active');if(sb)sb.classList.add('active');
+}
+function applyFn(f){document.body.classList.remove('fn-nunito','fn-comic','fn-atkinson');document.body.classList.add('fn-'+f);}
+function applySz(s){document.body.classList.remove('sz-normal','sz-large','sz-xlarge');document.body.classList.add('sz-'+s);}
+function setFont(f,el){applyFn(f);localStorage.setItem('pf',f);document.querySelectorAll('[id^="btn-fn-"]').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+function setSize(s,el){applySz(s);localStorage.setItem('ps',s);document.querySelectorAll('[id^="btn-sz-"]').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
 
-  calEvents = {};
-  const teacherNotes = [];
-
-  for (let r = 1; r < rows.length; r++) {
-    const row = rows[r];
-    const get = (i) => (i >= 0 && i < row.length) ? row[i].trim() : '';
-
-    const dateRaw    = get(idx.date);
-    const subject    = get(idx.subject);
-    const type       = get(idx.type);
-    const assignment = get(idx.assignment);
-    const dueDateRaw = get(idx.due_date);
-    const priority   = get(idx.priority) || 'medium';
-    const notes      = get(idx.notes);
-
-    if (!assignment) continue;
-
-    const dateKey    = parseDate(dateRaw);
-    const dueDateKey = parseDate(dueDateRaw) || dateKey;
-
-    if (!dateKey) continue;
-
-    const entry = { subject, type, assignment, dueDate: dueDateKey, priority, notes, fromSheet: true };
-    if (!calEvents[dateKey]) calEvents[dateKey] = [];
-    calEvents[dateKey].push(entry);
-
-    // Collect teacher notes
-    if (notes) teacherNotes.push({ title: `${subject} — ${dateRaw}`, body: notes, date: dateRaw });
-  }
-
-  localStorage.setItem('calEvents', JSON.stringify(calEvents));
-  localStorage.setItem('teacherNotes', JSON.stringify(teacherNotes));
+function showPage(p,el){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');el.classList.add('active');
+  if(p==='progress')renderProgress();
 }
 
-function parseDate(str) {
-  if (!str) return null;
-  // ISO: 2026-04-15
-  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
-  // M/D/YYYY or MM/DD/YYYY or M/D/YY
-  const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-  if (m) {
-    const yr = m[3].length === 2 ? '20' + m[3] : m[3];
-    return `${yr}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
-  }
-  // Fallback
-  const d = new Date(str);
-  if (!isNaN(d)) return d.toISOString().split('T')[0];
-  return null;
+async function syncSheets(){
+  const sid=localStorage.getItem('sheet_id')||SHEET_ID_DEFAULT;
+  if(!sid)return;
+  setSS('syncing','Syncing...');
+  try{
+    // No API key needed — uses public CSV export URL
+    const url=`https://docs.google.com/spreadsheets/d/${sid}/export?format=csv&cachebust=${Date.now()}`;
+    const res=await fetch(url);
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const csv=await res.text();
+    const rows=parseCSV(csv);
+    if(rows.length<2)throw new Error('Sheet empty');
+    parseRows(rows);setSS('ok','Synced');
+    renderCal();renderHW();renderNotes();updDash();
+  }catch(e){setSS('error','Sync failed');console.error(e);}
 }
 
-function setSyncStatus(state, text) {
-  const dot = document.getElementById('sync-dot');
-  dot.className = 'sync-dot' + (state==='syncing'?' syncing':state==='error'?' error':'');
-  document.getElementById('sync-text').textContent = text;
-}
-
-// ══════════════════════════════════════
-// CALENDAR
-// ══════════════════════════════════════
-function changeMonth(dir) {
-  calMonth += dir;
-  if (calMonth > 11) { calMonth = 0; calYear++; }
-  if (calMonth < 0)  { calMonth = 11; calYear--; }
-  renderCalendar();
-}
-
-function renderCalendar() {
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  document.getElementById('cal-month-title').textContent = `${months[calMonth]} ${calYear}`;
-
-  const body = document.getElementById('cal-body');
-  body.innerHTML = '';
-  const today    = new Date();
-  const firstDay = new Date(calYear, calMonth, 1).getDay();
-  const daysInM  = new Date(calYear, calMonth+1, 0).getDate();
-  const daysInP  = new Date(calYear, calMonth, 0).getDate();
-  const total    = Math.ceil((firstDay + daysInM) / 7) * 7;
-
-  for (let i = 0; i < total; i++) {
-    let day, mo = calMonth, yr = calYear, other = false;
-    if (i < firstDay)               { day = daysInP - firstDay + 1 + i; mo = calMonth-1; other = true; }
-    else if (i >= firstDay+daysInM) { day = i - firstDay - daysInM + 1; mo = calMonth+1; other = true; }
-    else                            { day = i - firstDay + 1; }
-
-    const d = new Date(yr, mo, day);
-    const key = d.toISOString().split('T')[0];
-    const isToday = d.toDateString() === today.toDateString();
-    const events = calEvents[key] || [];
-
-    // Also show homework due dates
-    const hwDue = homework.filter(h => h.dueDate === key && !h.done);
-
-    const cell = document.createElement('div');
-    cell.className = 'cal-cell' + (other?' other-month':'') + (isToday?' today':'');
-
-    const numEl = `<div class="cal-day-num ${isToday?'today-num':''}">${d.getDate()}</div>`;
-    const eventPills = events.slice(0,3).map(e =>
-      `<div class="cal-event-pill ${subjectClass(e.subject)}" onclick="openModal('${key}')" title="${e.assignment}">${e.subject}: ${e.assignment.substring(0,16)}${e.assignment.length>16?'…':''}</div>`
-    ).join('');
-    const more = events.length > 3 ? `<div style="font-size:10px;font-weight:800;color:var(--text-muted)">+${events.length-3} more</div>` : '';
-
-    cell.innerHTML = numEl + eventPills + more;
-    body.appendChild(cell);
-  }
-}
-
-function subjectClass(s) {
-  s = (s||'').toLowerCase();
-  if (s.includes('ela')||s.includes('english')||s.includes('reading')) return 's-ela';
-  if (s.includes('math')) return 's-math';
-  if (s.includes('science')) return 's-science';
-  if (s.includes('social')) return 's-social';
-  if (s.includes('french')) return 's-french';
-  if (s.includes('art')||s.includes('related')) return 's-relarts';
-  return 's-other';
-}
-
-function typeClass(t) {
-  t = (t||'').toLowerCase();
-  if (t.includes('homework')) return 't-homework';
-  if (t.includes('assess')||t.includes('test')||t.includes('quiz')) return 't-assessment';
-  if (t.includes('project')) return 't-project';
-  if (t.includes('reminder')) return 't-reminder';
-  return 't-homework';
-}
-
-function openModal(dateKey) {
-  const events = calEvents[dateKey] || [];
-  if (!events.length) return;
-  const d = new Date(dateKey + 'T00:00:00');
-  document.getElementById('modal-date-title').textContent = '📅 ' + d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  document.getElementById('modal-content').innerHTML = events.map(e => `
-    <div class="event-detail">
-      <div style="margin-bottom:10px"><span class="cal-event-pill ${subjectClass(e.subject)}" style="font-size:12px;display:inline-block">${e.subject}</span> <span class="cal-event-pill ${typeClass(e.type)}" style="font-size:12px;display:inline-block">${e.type}</span></div>
-      <div class="event-detail-row"><span class="event-label">📋 Task</span><span>${e.assignment}</span></div>
-      ${e.dueDate ? `<div class="event-detail-row"><span class="event-label">📅 Due</span><span>${formatDate(e.dueDate)}</span></div>` : ''}
-      ${e.priority ? `<div class="event-detail-row"><span class="event-label">⚡ Priority</span><span class="${'p-'+e.priority}">${e.priority}</span></div>` : ''}
-      ${e.notes ? `<div class="event-detail-row"><span class="event-label">📝 Notes</span><span>${e.notes}</span></div>` : ''}
-    </div>
-  `).join('');
-  document.getElementById('event-modal').classList.add('open');
-}
-
-function closeModal() { document.getElementById('event-modal').classList.remove('open'); }
-document.getElementById('event-modal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
-
-// ══════════════════════════════════════
-// FIREBASE HELPERS
-// ══════════════════════════════════════
-async function fbGet(path) {
-  const { doc, getDoc } = window._firebase;
-  const ref = doc(window._db, 'students', FIREBASE_USER_ID, ...path.split('/'));
-  const snap = await getDoc(ref);
-  return snap.exists() ? snap.data() : null;
-}
-
-async function fbSet(path, data) {
-  const { doc, setDoc } = window._firebase;
-  const ref = doc(window._db, 'students', FIREBASE_USER_ID, ...path.split('/'));
-  await setDoc(ref, data, { merge: true });
-}
-
-async function fbAdd(colPath, data) {
-  const { collection, addDoc } = window._firebase;
-  const ref = collection(window._db, 'students', FIREBASE_USER_ID, ...colPath.split('/'));
-  return await addDoc(ref, data);
-}
-
-async function fbDelete(path) {
-  const { doc, deleteDoc } = window._firebase;
-  const ref = doc(window._db, 'students', FIREBASE_USER_ID, ...path.split('/'));
-  await deleteDoc(ref);
-}
-
-async function fbList(colPath) {
-  const { collection, getDocs, query, orderBy } = window._firebase;
-  const ref = collection(window._db, 'students', FIREBASE_USER_ID, ...colPath.split('/'));
-  const snap = await getDocs(ref);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-}
-
-// ══════════════════════════════════════
-// LOAD FROM FIREBASE
-// ══════════════════════════════════════
-async function loadFromFirebase() {
-  try {
-    [homework, moodLog, reminders] = await Promise.all([
-      fbList('homework'),
-      fbList('moodLog'),
-      fbList('reminders'),
-    ]);
-    renderCalendar();
-    renderHomeworkList();
-    renderMoodLog();
-    renderReminders();
-    renderProgress();
-    updateDashboard();
-  } catch(e) {
-    console.error('Firebase load error:', e);
-  }
-}
-
-// ══════════════════════════════════════
-// HOMEWORK
-// ══════════════════════════════════════
-async function addHomework() {
-  const task    = document.getElementById('hw-task-input').value.trim();
-  const subject = document.getElementById('hw-subject-select').value;
-  const due     = document.getElementById('hw-due-input').value;
-  if (!task) { alert('Please enter a task!'); return; }
-
-  const item = { task, subject, dueDate: due, done: false, fromSheet: false, createdAt: Date.now() };
-  try {
-    const ref = await fbAdd('homework', item);
-    homework.push({ id: ref.id, ...item });
-    document.getElementById('hw-task-input').value = '';
-    renderHomeworkList();
-    updateDashboard();
-  } catch(e) { alert('Could not save. Check your connection.'); }
-}
-
-async function toggleHomework(id) {
-  const item = homework.find(h => h.id === id);
-  if (!item) return;
-  item.done = !item.done;
-  try {
-    await fbSet(`homework/${id}`, { done: item.done });
-    renderHomeworkList();
-    renderProgress();
-    updateDashboard();
-  } catch(e) { console.error(e); }
-}
-
-async function deleteHomework(id) {
-  try {
-    await fbDelete(`homework/${id}`);
-    homework = homework.filter(h => h.id !== id);
-    renderHomeworkList();
-    updateDashboard();
-  } catch(e) { console.error(e); }
-}
-
-const SUBJECT_COLORS = {
-  'ELA':           { bg:'#fce7f3', color:'#9d174d' },
-  'Math':          { bg:'#dbeafe', color:'#1e40af' },
-  'Science':       { bg:'#d1fae5', color:'#065f46' },
-  'Social Studies':{ bg:'#fef3c7', color:'#92400e' },
-  'French':        { bg:'#ede9fe', color:'#5b21b6' },
-  'Related Arts':  { bg:'#fce8d5', color:'#9a3412' },
-  'Other':         { bg:'#f3f4f6', color:'#374151' },
-};
-const SUBJECT_EMOJI = { 'ELA':'📖','Math':'📐','Science':'🔬','Social Studies':'🌍','French':'🇫🇷','Related Arts':'🎨','Other':'📌' };
-
-function subjectBadge(s) {
-  const c = SUBJECT_COLORS[s] || SUBJECT_COLORS['Other'];
-  return `<span class="hw-badge" style="background:${c.bg};color:${c.color}">${SUBJECT_EMOJI[s]||'📌'} ${s}</span>`;
-}
-
-function renderHomeworkList() {
-  const list = document.getElementById('hw-list');
-
-  // Merge sheet events into homework view (read-only, no Firebase entry)
-  const sheetItems = [];
-  for (const [dateKey, events] of Object.entries(calEvents)) {
-    for (const e of events) {
-      if (e.type === 'reminder') continue;
-      // Check if not already in firebase homework
-      const exists = homework.find(h => h.fromSheet && h.task === e.assignment && h.dueDate === (e.dueDate||dateKey));
-      if (!exists) sheetItems.push({ id:'sheet_'+dateKey+'_'+e.assignment, task:e.assignment, subject:e.subject, dueDate:e.dueDate||dateKey, done:false, fromSheet:true, priority:e.priority });
+function parseCSV(text){
+  // Handles quoted fields with commas and newlines inside them
+  const rows=[];let row=[],cur='',inQ=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i],nx=text[i+1];
+    if(inQ){
+      if(ch==='"'&&nx==='"'){cur+='"';i++;}
+      else if(ch==='"'){inQ=false;}
+      else{cur+=ch;}
+    }else{
+      if(ch==='"'){inQ=true;}
+      else if(ch===','){row.push(cur.trim());cur='';}
+      else if(ch==='\n'||ch==='\r'){
+        row.push(cur.trim());cur='';
+        if(row.some(c=>c!==''))rows.push(row);
+        row=[];if(ch==='\r'&&nx==='\n')i++;
+      }else{cur+=ch;}
     }
   }
+  if(cur||row.length)row.push(cur.trim());
+  if(row.some(c=>c!==''))rows.push(row);
+  return rows;
+}
 
-  const pending = [...homework.filter(h=>!h.done), ...sheetItems.filter(s=>!s.done)];
-  const done    = homework.filter(h=>h.done);
-  const all     = [...pending, ...done];
-
-  const badge = homework.filter(h=>!h.done).length + sheetItems.filter(s=>!s.done).length;
-  document.getElementById('hw-badge').textContent = badge;
-
-  if (!all.length) {
-    list.innerHTML = '<div class="empty-state"><span class="empty-state-emoji">🎉</span><p>No homework! You\'re all caught up!</p></div>';
-    return;
+function parseRows(rows){
+  const h=rows[0].map(x=>x.toLowerCase().trim());
+  const ix={date:h.indexOf('date'),subject:h.indexOf('subject'),type:h.indexOf('type'),assignment:h.indexOf('assignment'),due_date:h.indexOf('due_date'),priority:h.indexOf('priority'),notes:h.indexOf('notes')};
+  calEv={};const tn=[];
+  for(let r=1;r<rows.length;r++){
+    const row=rows[r];const g=i=>(i>=0&&i<row.length)?row[i].trim():'';
+    const asgn=g(ix.assignment);if(!asgn)continue;
+    const dk=pDate(g(ix.date));if(!dk)continue;
+    const en={subject:g(ix.subject),type:g(ix.type),assignment:asgn,dueDate:pDate(g(ix.due_date))||dk,priority:g(ix.priority)||'medium',notes:g(ix.notes),fromSheet:true};
+    if(!calEv[dk])calEv[dk]=[];calEv[dk].push(en);
+    if(en.notes)tn.push({title:en.subject+' — '+g(ix.date),body:en.notes,date:g(ix.date)});
   }
+  localStorage.setItem('calEv',JSON.stringify(calEv));
+  localStorage.setItem('tcNotes',JSON.stringify(tn));
+}
+function pDate(s){
+  if(!s)return null;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+  const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m){const y=m[3].length===2?'20'+m[3]:m[3];return y+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0');}
+  const d=new Date(s);if(!isNaN(d))return d.toISOString().split('T')[0];return null;
+}
+function setSS(st,tx){
+  document.getElementById('sync-dot').className='sync-dot'+(st==='syncing'?' syncing':st==='error'?' error':'');
+  document.getElementById('sync-txt').textContent=tx;
+}
 
-  list.innerHTML = all.map(h => `
+function changeMonth(d){calM+=d;if(calM>11){calM=0;calY++;}if(calM<0){calM=11;calY--;}renderCal();}
+function renderCal(){
+  const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-title').textContent=MN[calM]+' '+calY;
+  const body=document.getElementById('cal-body');body.innerHTML='';
+  const today=new Date();
+  const fd=new Date(calY,calM,1).getDay();
+  const dim=new Date(calY,calM+1,0).getDate();
+  const dip=new Date(calY,calM,0).getDate();
+  const tot=Math.ceil((fd+dim)/7)*7;
+  for(let i=0;i<tot;i++){
+    let day,mo=calM,yr=calY,oth=false;
+    if(i<fd){day=dip-fd+1+i;mo=calM-1;oth=true;}
+    else if(i>=fd+dim){day=i-fd-dim+1;mo=calM+1;oth=true;}
+    else{day=i-fd+1;}
+    const d=new Date(yr,mo,day);const key=d.toISOString().split('T')[0];
+    const isT=d.toDateString()===today.toDateString();
+    const evs=calEv[key]||[];
+    const cell=document.createElement('div');
+    cell.className='cal-cell'+(oth?' other-m':'')+(isT?' today-c':'');
+    const dn=`<div class="cal-dnum ${isT?'today-n':''}">${d.getDate()}</div>`;
+    const pills=evs.slice(0,3).map(e=>`<div class="pill ${sC(e.subject)}" onclick="openModal('${key}')">${e.subject}: ${e.assignment}</div>`).join('');
+    const more=evs.length>3?`<div style="font-size:10px;font-weight:800;color:var(--muted);padding:2px 4px">+${evs.length-3} more</div>`:'';
+    cell.innerHTML=dn+pills+more;body.appendChild(cell);
+  }
+}
+function sC(s){s=(s||'').toLowerCase();if(s.includes('ela')||s.includes('english'))return's-ela';if(s.includes('math'))return's-math';if(s.includes('sci'))return's-sci';if(s.includes('social'))return's-ss';if(s.includes('french'))return's-fr';if(s.includes('art')||s.includes('related'))return's-ra';return's-oth';}
+function tC(t){t=(t||'').toLowerCase();if(t.includes('assess')||t.includes('test')||t.includes('quiz'))return't-as';if(t.includes('project'))return't-pr';if(t.includes('reminder'))return't-re';return't-hw';}
+
+function openModal(key){
+  const evs=calEv[key]||[];if(!evs.length)return;
+  const d=new Date(key+'T00:00:00');
+  document.getElementById('modal-title-txt').textContent='Details — '+d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  document.getElementById('modal-body').innerHTML=evs.map(e=>`
+    <div class="ev-detail">
+      <div style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap">
+        <span class="pill ${sC(e.subject)}" style="font-size:12px">${e.subject}</span>
+        <span class="pill ${tC(e.type)}" style="font-size:12px">${e.type||'homework'}</span>
+        ${e.priority?`<span class="pill" style="font-size:12px;background:#f3f4f6;color:#374151">${e.priority} priority</span>`:''}
+      </div>
+      <div class="ev-row"><span class="ev-lbl">Task</span><span>${e.assignment}</span></div>
+      ${e.dueDate?`<div class="ev-row"><span class="ev-lbl">Due</span><span>${fmtDate(e.dueDate)}</span></div>`:''}
+      ${e.notes?`<div class="ev-row"><span class="ev-lbl">Notes</span><span>${e.notes}</span></div>`:''}
+    </div>`).join('');
+  document.getElementById('ev-modal').classList.add('open');
+}
+function closeModal(){document.getElementById('ev-modal').classList.remove('open');}
+document.getElementById('ev-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+async function fbAdd(col,data){const{collection,addDoc}=window._firebase;return await addDoc(collection(window._db,'students',FID,col),data);}
+async function fbSet(col,id,data){const{doc,setDoc}=window._firebase;await setDoc(doc(window._db,'students',FID,col,id),data,{merge:true});}
+async function fbDel(col,id){const{doc,deleteDoc}=window._firebase;await deleteDoc(doc(window._db,'students',FID,col,id));}
+async function fbList(col){const{collection,getDocs}=window._firebase;const s=await getDocs(collection(window._db,'students',FID,col));return s.docs.map(d=>({id:d.id,...d.data()}));}
+
+async function loadFB(){
+  try{[hw,moodL,rems]=await Promise.all([fbList('homework'),fbList('moodLog'),fbList('reminders')]);renderCal();renderHW();renderMoodLog();renderRems();renderProgress();updDash();}
+  catch(e){console.error('FB load error:',e);}
+}
+
+const SC2={'ELA':{bg:'#fce7f3',cl:'#9d174d'},'Math':{bg:'#dbeafe',cl:'#1e40af'},'Science':{bg:'#d1fae5',cl:'#065f46'},'Social Studies':{bg:'#fef3c7',cl:'#92400e'},'French':{bg:'#ede9fe',cl:'#5b21b6'},'Related Arts':{bg:'#fce8d5',cl:'#9a3412'},'Other':{bg:'#f3f4f6',cl:'#374151'}};
+const SE={'ELA':'&#128214;','Math':'&#128208;','Science':'&#128300;','Social Studies':'&#127758;','French':'&#127467;&#127479;','Related Arts':'&#127912;','Other':'&#128204;'};
+function sBdg(s){const c=SC2[s]||SC2['Other'];return`<span class="hw-bdg" style="background:${c.bg};color:${c.cl}">${SE[s]||'&#128204;'} ${s}</span>`;}
+
+async function addHW(){
+  if(role==='teacher')return;
+  const task=document.getElementById('hw-txt').value.trim();
+  const subj=document.getElementById('hw-subj').value;
+  const due=document.getElementById('hw-due').value;
+  if(!task){alert('Please enter a task!');return;}
+  const item={task,subject:subj,dueDate:due,done:false,fromSheet:false,createdAt:Date.now()};
+  try{const ref=await fbAdd('homework',item);hw.push({id:ref.id,...item});document.getElementById('hw-txt').value='';renderHW();updDash();}
+  catch(e){alert('Could not save. Check your connection.');}
+}
+async function toggleHW(id){
+  if(role==='teacher')return;
+  const item=hw.find(h=>h.id===id);if(!item)return;item.done=!item.done;
+  try{await fbSet('homework',id,{done:item.done});renderHW();renderProgress();updDash();}catch(e){console.error(e);}
+}
+async function delHW(id){
+  if(role==='teacher')return;
+  try{await fbDel('homework',id);hw=hw.filter(h=>h.id!==id);renderHW();updDash();}catch(e){console.error(e);}
+}
+
+function renderHW(){
+  const list=document.getElementById('hw-list');
+  const si=[];
+  for(const[dk,evs]of Object.entries(calEv)){
+    for(const e of evs){
+      if((e.type||'').toLowerCase()==='reminder')continue;
+      const ex=hw.find(h=>h.fromSheet&&h.task===e.assignment&&h.dueDate===(e.dueDate||dk));
+      if(!ex)si.push({id:'s_'+dk+'_'+e.assignment,task:e.assignment,subject:e.subject,dueDate:e.dueDate||dk,done:false,fromSheet:true,notes:e.notes});
+    }
+  }
+  const all=[...hw.filter(h=>!h.done),...si,...hw.filter(h=>h.done)];
+  document.getElementById('hw-badge').textContent=hw.filter(h=>!h.done).length+si.length;
+  if(!all.length){list.innerHTML='<div class="empty"><span class="empty-icon">&#127881;</span><p>No homework! All caught up!</p></div>';return;}
+  list.innerHTML=all.map(h=>`
     <div class="hw-item ${h.done?'done':''}">
       ${h.fromSheet
-        ? `<div class="hw-check" style="background:#f3f4f6;cursor:default;font-size:11px">📅</div>`
-        : `<div class="hw-check ${h.done?'checked':''}" onclick="toggleHomework('${h.id}')">${h.done?'✓':''}</div>`
+        ?`<div class="hw-chk" style="background:#f0f4ff;cursor:default;font-size:14px;border-color:#c7d2fe">&#128197;</div>`
+        :`<div class="hw-chk ${h.done?'checked':''}" onclick="toggleHW('${h.id}')">${h.done?'&#10003;':''}</div>`
       }
-      <div class="hw-task">${h.task}</div>
-      ${subjectBadge(h.subject||'Other')}
-      ${h.dueDate ? `<span class="hw-due">${formatDate(h.dueDate)}</span>` : ''}
-      ${h.fromSheet ? `<span class="hw-source">from planner</span>` : `<button class="hw-delete" onclick="deleteHomework('${h.id}')">✕</button>`}
-    </div>
-  `).join('');
-}
-
-function formatDate(ds) {
-  if (!ds) return '';
-  const d = new Date(ds + 'T00:00:00');
-  const t = new Date(); t.setHours(0,0,0,0);
-  const diff = Math.round((d - t) / 86400000);
-  if (diff === 0) return '⚠️ Due today!';
-  if (diff === 1) return '⏰ Due tomorrow';
-  if (diff < 0)  return `⏳ Was due ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
-  return `📅 ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
-}
-
-// ══════════════════════════════════════
-// MOOD
-// ══════════════════════════════════════
-function selectMood(mood, emoji, el) {
-  currentMood = mood; currentMoodEmoji = emoji;
-  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
-  el.classList.add('selected');
-}
-
-async function saveMoodEntry() {
-  if (!currentMood) { alert('Pick a mood first!'); return; }
-  const focus = parseInt(document.getElementById('focus-slider').value);
-  const entry = { mood: currentMood, emoji: currentMoodEmoji, focus, date: new Date().toISOString() };
-  try {
-    const ref = await fbAdd('moodLog', entry);
-    moodLog.unshift({ id: ref.id, ...entry });
-    document.getElementById('welcome-emoji').textContent = currentMoodEmoji;
-    renderMoodLog();
-    updateDashboard();
-    alert('Mood saved! 🎉');
-  } catch(e) { alert('Could not save. Check your connection.'); }
-}
-
-function renderMoodLog() {
-  const log = document.getElementById('mood-log');
-  if (!moodLog.length) {
-    log.innerHTML = '<div class="empty-state"><span class="empty-state-emoji">😊</span><p>No entries yet!</p></div>';
-    return;
-  }
-  log.innerHTML = moodLog.slice(0,20).map(e => {
-    const d = new Date(e.date);
-    return `<div class="mood-entry">
-      <div class="mood-entry-emoji">${e.emoji}</div>
-      <div class="mood-entry-info">
-        <div style="font-weight:800;text-transform:capitalize">${e.mood}</div>
-        <div class="mood-entry-date">${d.toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div>
+      <div class="hw-main">
+        <div class="hw-task">${h.task}</div>
+        <div class="hw-meta">${sBdg(h.subject||'Other')}${h.dueDate?`<span class="hw-due">${fmtDate(h.dueDate)}</span>`:''} ${h.fromSheet?'<span class="hw-src">from teacher\'s planner</span>':''}</div>
+        ${h.notes?`<div class="hw-notes">&#128221; ${h.notes}</div>`:''}
       </div>
-      <div class="mood-entry-focus">🎯 ${e.focus}%</div>
-    </div>`;
+      ${(!h.fromSheet&&role!=='teacher')?`<button class="hw-del" onclick="delHW('${h.id}')">&#10005;</button>`:''}
+    </div>`).join('');
+}
+
+function fmtDate(ds){
+  if(!ds)return'';
+  const d=new Date(ds+'T00:00:00'),t=new Date();t.setHours(0,0,0,0);
+  const df=Math.round((d-t)/86400000);
+  if(df===0)return'&#9888;&#65039; Due today!';if(df===1)return'&#9200; Due tomorrow';
+  if(df===-1)return'&#8987; Due yesterday';if(df<0)return'&#8987; Was due '+d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return'&#128197; Due '+d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+
+function selMood(m,em,el){
+  if(role==='teacher')return;
+  curMood=m;curMoodEm=em;
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');
+}
+async function saveMood(){
+  if(role==='teacher')return;
+  if(!curMood){alert('Pick a mood first!');return;}
+  const focus=parseInt(document.getElementById('focus-slider').value);
+  const entry={mood:curMood,emoji:curMoodEm,focus,date:new Date().toISOString()};
+  try{const ref=await fbAdd('moodLog',entry);moodL.unshift({id:ref.id,...entry});document.getElementById('greet-emoji').innerHTML=curMoodEm;renderMoodLog();updDash();alert('Mood saved!');}
+  catch(e){alert('Could not save.');}
+}
+function renderMoodLog(){
+  const log=document.getElementById('mood-log');
+  if(!moodL.length){log.innerHTML='<div class="empty"><span class="empty-icon">&#128522;</span><p>No entries yet!</p></div>';return;}
+  log.innerHTML=moodL.slice(0,20).map(e=>{
+    const d=new Date(e.date);
+    return`<div class="mood-entry"><div class="me-em">${e.emoji}</div><div class="me-info"><div style="font-weight:800;text-transform:capitalize;font-size:var(--fs)">${e.mood}</div><div class="me-date">${d.toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div></div><div class="me-focus">&#127919; ${e.focus}%</div></div>`;
   }).join('');
 }
 
-// ══════════════════════════════════════
-// REMINDERS
-// ══════════════════════════════════════
-async function addReminder() {
-  const text     = document.getElementById('rem-text-input').value.trim();
-  const priority = document.getElementById('rem-priority').value;
-  const time     = document.getElementById('rem-time-input').value;
-  if (!text) { alert('What do you need to remember?'); return; }
-
-  const item = { text, priority, time, createdAt: Date.now() };
-  try {
-    const ref = await fbAdd('reminders', item);
-    reminders.push({ id: ref.id, ...item });
-    document.getElementById('rem-text-input').value = '';
-    renderReminders();
-    updateDashboard();
-  } catch(e) { alert('Could not save. Check your connection.'); }
+const PI={high:'&#128308;',medium:'&#128993;',low:'&#128309;'};
+async function addRem(){
+  if(role==='teacher')return;
+  const text=document.getElementById('rem-txt').value.trim();
+  const pri=document.getElementById('rem-pri').value;
+  const time=document.getElementById('rem-time').value;
+  if(!text){alert('What do you need to remember?');return;}
+  const item={text,priority:pri,time,createdAt:Date.now()};
+  try{const ref=await fbAdd('reminders',item);rems.push({id:ref.id,...item});document.getElementById('rem-txt').value='';renderRems();updDash();}
+  catch(e){alert('Could not save.');}
+}
+async function delRem(id){
+  if(role==='teacher')return;
+  try{await fbDel('reminders',id);rems=rems.filter(r=>r.id!==id);renderRems();updDash();}catch(e){console.error(e);}
+}
+function renderRems(){
+  const list=document.getElementById('rem-list');
+  if(!rems.length){list.innerHTML='<div class="empty"><span class="empty-icon">&#9989;</span><p>No reminders! Add one above.</p></div>';return;}
+  list.innerHTML=rems.map(r=>`
+    <div class="rem-item ${r.priority}">
+      <div style="font-size:22px">${PI[r.priority]||PI.medium}</div>
+      <div class="rem-info"><div class="rem-title">${r.text}</div>${r.time?`<div class="rem-time">&#128197; ${new Date(r.time).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div>`:''}</div>
+      ${role!=='teacher'?`<button class="rem-del" onclick="delRem('${r.id}')">&#10005;</button>`:''}
+    </div>`).join('');
 }
 
-async function deleteReminder(id) {
-  try {
-    await fbDelete(`reminders/${id}`);
-    reminders = reminders.filter(r => r.id !== id);
-    renderReminders();
-    updateDashboard();
-  } catch(e) { console.error(e); }
-}
-
-const PRIORITY_ICON = { high:'🔴', medium:'🟡', low:'🔵' };
-
-function renderReminders() {
-  const list = document.getElementById('reminder-list');
-  if (!reminders.length) {
-    list.innerHTML = '<div class="empty-state"><span class="empty-state-emoji">✅</span><p>No reminders! Add one above.</p></div>';
-    return;
-  }
-  list.innerHTML = reminders.map(r => `
-    <div class="reminder-item ${r.priority}">
-      <div style="font-size:22px">${PRIORITY_ICON[r.priority]||'🟡'}</div>
-      <div class="reminder-info">
-        <div class="reminder-title">${r.text}</div>
-        ${r.time ? `<div class="reminder-time">📅 ${new Date(r.time).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div>` : ''}
-      </div>
-      <button class="reminder-delete" onclick="deleteReminder('${r.id}')">✕</button>
-    </div>
-  `).join('');
-}
-
-// ══════════════════════════════════════
-// PROGRESS
-// ══════════════════════════════════════
-function renderProgress() {
-  const subjects = ['ELA','Math','Science','Social Studies','French','Related Arts'];
-  const colors   = { 'ELA':'#ec4899','Math':'#3b82f6','Science':'#10b981','Social Studies':'#f59e0b','French':'#8b5cf6','Related Arts':'#f97316' };
-  const container = document.getElementById('subject-progress');
-  const total = homework.length;
-  const done  = homework.filter(h=>h.done).length;
-
-  if (total > 0) {
-    const pct = Math.round((done/total)*100);
-    document.getElementById('progress-overall').innerHTML =
-      `Completed <span style="color:var(--accent-green)">${done}</span> of <span style="color:var(--primary)">${total}</span> tasks — <strong>${pct}%</strong> ${pct>=80?'🏆':pct>=50?'💪':'📚'}`;
-  }
-
-  container.innerHTML = subjects.map(s => {
-    const all  = homework.filter(h => (h.subject||'').toLowerCase() === s.toLowerCase());
-    const comp = all.filter(h=>h.done).length;
-    const pct  = all.length ? Math.round((comp/all.length)*100) : 0;
-    return `<div class="progress-card">
-      <div class="progress-header">
-        <div class="progress-name">${SUBJECT_EMOJI[s]||'📌'} ${s}</div>
-        <div class="progress-score" style="color:${colors[s]}">${pct}%</div>
-      </div>
-      <div class="progress-bar-bg">
-        <div class="progress-bar-fill" style="width:${pct}%;background:${colors[s]}"></div>
-      </div>
-      <div class="progress-detail">${comp} of ${all.length} tasks completed</div>
-    </div>`;
+function renderProgress(){
+  const subjs=['ELA','Math','Science','Social Studies','French','Related Arts'];
+  const cols={'ELA':'#ec4899','Math':'#3b82f6','Science':'#10b981','Social Studies':'#f59e0b','French':'#8b5cf6','Related Arts':'#f97316'};
+  const tot=hw.length,done=hw.filter(h=>h.done).length;
+  if(tot>0){const p=Math.round((done/tot)*100);document.getElementById('prog-overall').innerHTML=`Completed <span style="color:var(--green)">${done}</span> of <span style="color:var(--primary)">${tot}</span> tasks &mdash; <strong>${p}%</strong> ${p>=80?'&#127942;':p>=50?'&#128170;':'&#128218;'}`;}
+  document.getElementById('prog-list').innerHTML=subjs.map(s=>{
+    const a=hw.filter(h=>(h.subject||'').toLowerCase()===s.toLowerCase());
+    const c=a.filter(h=>h.done).length;const p=a.length?Math.round((c/a.length)*100):0;
+    return`<div class="prog-card"><div class="prog-hdr"><div class="prog-name">${SE[s]||''} ${s}</div><div class="prog-score" style="color:${cols[s]}">${p}%</div></div><div class="prog-bg"><div class="prog-fill" style="width:${p}%;background:${cols[s]}"></div></div><div class="prog-det">${c} of ${a.length} tasks completed</div></div>`;
   }).join('');
 }
 
-// ══════════════════════════════════════
-// NOTES
-// ══════════════════════════════════════
-function renderNotes() {
-  const saved = localStorage.getItem('teacherNotes');
-  const notes = saved ? JSON.parse(saved) : [];
-  const grid  = document.getElementById('notes-grid');
-  if (!notes.length) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="empty-state-emoji">📝</span><p>Sync the planner to see notes here!</p></div>';
-    return;
+function renderNotes(){
+  const saved=localStorage.getItem('tcNotes');const notes=saved?JSON.parse(saved):[];
+  const grid=document.getElementById('notes-grid');
+  if(!notes.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><span class="empty-icon">&#128221;</span><p>Sync the planner to see notes here!</p></div>';return;}
+  grid.innerHTML=notes.map(n=>`<div class="note-card"><div class="note-title">${n.title}</div><div class="note-prev">${n.body}</div><div class="note-date">${n.date}</div></div>`).join('');
+}
+
+function updDash(){
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('s-today').textContent=hw.filter(h=>h.dueDate===today&&!h.done).length;
+  document.getElementById('s-total').textContent=hw.filter(h=>!h.done).length;
+  document.getElementById('s-done').textContent=hw.filter(h=>h.done).length;
+  document.getElementById('s-streak').innerHTML='&#128293;'+moodL.length;
+  const th=hw.filter(h=>h.dueDate===today);
+  document.getElementById('dash-hw').innerHTML=th.length
+    ?th.map(h=>`<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)"><div class="hw-chk ${h.done?'checked':''}" onclick="toggleHW('${h.id}')" style="width:20px;height:20px;font-size:12px;margin-top:2px;flex-shrink:0">${h.done?'&#10003;':''}</div><div style="flex:1"><div style="font-weight:700;font-size:var(--fs);${h.done?'text-decoration:line-through;opacity:.5':''}">${h.task}</div><div style="margin-top:3px">${sBdg(h.subject||'Other')}</div></div></div>`).join('')
+    :'<div class="empty"><span class="empty-icon">&#127881;</span><p>Nothing due today!</p></div>';
+  document.getElementById('dash-rem').innerHTML=rems.length
+    ?rems.slice(0,3).map(r=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:var(--fs)">${PI[r.priority]||PI.medium} <span style="font-weight:700">${r.text}</span></div>`).join('')
+    :'<div class="empty"><span class="empty-icon">&#9989;</span><p>No reminders!</p></div>';
+}
+
+function saveName(){
+  const n=document.getElementById('set-name').value.trim();if(!n){alert('Please enter a name!');return;}
+  localStorage.setItem('student_name',n);applyName();alert('Name saved!');
+}
+
+function changePin(who){
+  const msgs={student:'st-pin-msg',parent:'pa-pin-msg',teacher:'tc-pin-msg'};
+  const msgEl=document.getElementById(msgs[who]);
+  let np,confirm;
+  if(who==='student'){np=document.getElementById('new-st-pin').value;confirm=document.getElementById('con-st-pin').value;}
+  else if(who==='parent'){
+    const cur=document.getElementById('cur-pa-pin').value;
+    if(cur!==PINS.parent){msgEl.style.color='var(--pink)';msgEl.textContent='Current parent PIN is wrong.';return;}
+    np=document.getElementById('new-pa-pin').value;confirm=np;
   }
-  grid.innerHTML = notes.map(n => `
-    <div class="note-card">
-      <div class="note-title">${n.title}</div>
-      <div class="note-preview">${n.body}</div>
-      <div class="note-date">${n.date}</div>
-    </div>
-  `).join('');
+  else{np=document.getElementById('new-tc-pin').value;confirm=document.getElementById('con-tc-pin').value;}
+  if(np.length!==4||!/^\d{4}$/.test(np)){msgEl.style.color='var(--pink)';msgEl.textContent='PIN must be exactly 4 digits.';return;}
+  if(np!==confirm&&who!=='parent'){msgEl.style.color='var(--pink)';msgEl.textContent='PINs do not match.';return;}
+  PINS[who]=np;localStorage.setItem('pin_'+who,np);
+  msgEl.style.color='var(--green)';msgEl.textContent='PIN updated!';
 }
 
-// ══════════════════════════════════════
-// DASHBOARD SUMMARY
-// ══════════════════════════════════════
-function updateDashboard() {
-  const today = new Date().toISOString().split('T')[0];
-  const dueToday = homework.filter(h => h.dueDate===today && !h.done).length;
-  const total    = homework.filter(h => !h.done).length;
-  const done     = homework.filter(h => h.done).length;
-  document.getElementById('stat-due-today').textContent = dueToday;
-  document.getElementById('stat-total-hw').textContent  = total;
-  document.getElementById('stat-done').textContent      = done;
-  document.getElementById('stat-streak').textContent    = '🔥' + moodLog.length;
-
-  // Today's HW
-  const todayHW = homework.filter(h => h.dueDate===today);
-  const dashHW  = document.getElementById('dashboard-hw-list');
-  if (todayHW.length) {
-    dashHW.innerHTML = todayHW.map(h => `
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px">
-        <div class="hw-check ${h.done?'checked':''}" onclick="toggleHomework('${h.id}')" style="width:20px;height:20px;font-size:12px">${h.done?'✓':''}</div>
-        <span style="font-weight:700;flex:1;${h.done?'text-decoration:line-through;opacity:0.5':''}">${h.task}</span>
-        ${subjectBadge(h.subject||'Other')}
-      </div>`).join('');
-  } else {
-    dashHW.innerHTML = '<div class="empty-state"><span class="empty-state-emoji">🎉</span><p>Nothing due today!</p></div>';
-  }
-
-  // Reminders
-  const dashRem = document.getElementById('dashboard-reminders-list');
-  if (reminders.length) {
-    dashRem.innerHTML = reminders.slice(0,3).map(r => `
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px">
-        <span>${PRIORITY_ICON[r.priority]||'🟡'}</span>
-        <span style="font-weight:700">${r.text}</span>
-      </div>`).join('');
-  } else {
-    dashRem.innerHTML = '<div class="empty-state"><span class="empty-state-emoji">✅</span><p>No reminders!</p></div>';
-  }
-}
-
-// ══════════════════════════════════════
-// SETTINGS
-// ══════════════════════════════════════
-function saveName() {
-  const name = document.getElementById('settings-name').value.trim();
-  if (!name) { alert('Please enter a name!'); return; }
-  localStorage.setItem('student_name', name);
-  applyName();
-  alert('Name saved! ✅');
-}
-
-function changePin() {
-  const current = document.getElementById('settings-current-pin').value;
-  const newPin  = document.getElementById('settings-new-pin').value;
-  const confirm = document.getElementById('settings-confirm-pin').value;
-  const msg     = document.getElementById('pin-change-msg');
-
-  if (current !== PIN)         { msg.style.color='var(--accent-pink)'; msg.textContent='❌ Current PIN is wrong.'; return; }
-  if (newPin.length !== 4)     { msg.style.color='var(--accent-pink)'; msg.textContent='❌ New PIN must be 4 digits.'; return; }
-  if (newPin !== confirm)      { msg.style.color='var(--accent-pink)'; msg.textContent='❌ PINs don\'t match.'; return; }
-  if (!/^\d{4}$/.test(newPin)) { msg.style.color='var(--accent-pink)'; msg.textContent='❌ PIN must be numbers only.'; return; }
-
-  PIN = newPin;
-  localStorage.setItem('dashboard_pin', PIN);
-  document.getElementById('settings-current-pin').value = '';
-  document.getElementById('settings-new-pin').value = '';
-  document.getElementById('settings-confirm-pin').value = '';
-  msg.style.color = 'var(--accent-green)';
-  msg.textContent = '✅ PIN updated!';
-}
-
-async function saveSheetConfig() {
-  const sheetId = document.getElementById('settings-sheet-id').value.trim();
-  const apiKey  = document.getElementById('settings-api-key').value.trim();
-  const msg     = document.getElementById('sheet-config-msg');
-  if (!sheetId || !apiKey) { msg.style.color='var(--accent-pink)'; msg.textContent='❌ Both fields are required.'; return; }
-  localStorage.setItem('sheet_id', sheetId);
-  localStorage.setItem('api_key', apiKey);
-  msg.style.color = 'var(--accent-green)';
-  msg.textContent = '✅ Saved! Syncing...';
-  await syncSheets();
-  msg.textContent = '✅ Saved & synced!';
+async function saveSheetConfig(){
+  const sid=document.getElementById('set-sheet-id').value.trim();
+  const msg=document.getElementById('sheet-msg');
+  if(!sid){msg.style.color='var(--pink)';msg.textContent='Sheet ID is required.';return;}
+  localStorage.setItem('sheet_id',sid);
+  msg.style.color='var(--green)';msg.textContent='Saved! Syncing...';
+  await syncSheets();msg.textContent='Saved and synced!';
 }
 </script>
 </body>
