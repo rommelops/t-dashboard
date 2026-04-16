@@ -117,7 +117,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .stat-lbl{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
 /* Calendar */
 .cal-nav{display:flex;align-items:center;gap:12px;margin-bottom:20px}
-.month-title{font-family:'Fredoka One',sans-serif;font-size:24px;flex:1}
+.month-title{font-family:'Fredoka One',sans-serif;font-size:24px;white-space:nowrap}
 .nav-arr{background:#fff;border:3px solid var(--border);border-radius:var(--rs);width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:900;color:var(--primary);transition:all .2s}
 .nav-arr:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
 .cal-grid{background:#fff;border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
@@ -233,6 +233,21 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
 /* Quote fade */
 @keyframes quoteFade{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
 .quote-animate{animation:quoteFade .5s ease forwards}
+.cal-cell{position:relative}
+.mood-cal-wrap{position:absolute;bottom:6px;right:6px;display:flex;align-items:center;gap:2px;cursor:pointer;z-index:2}
+.mood-cal-em{font-size:16px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15))}
+.mood-cal-badge{background:var(--pink);color:#fff;font-size:9px;font-weight:800;border-radius:20px;padding:1px 5px;line-height:1.4}
+.mood-popover{display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:220px;background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.18);padding:14px;z-index:200;border:2px solid var(--border)}
+.mood-popover::after{content:'';position:absolute;bottom:-8px;right:14px;width:14px;height:14px;background:#fff;border-right:2px solid var(--border);border-bottom:2px solid var(--border);transform:rotate(45deg)}
+.mood-popover.open{display:block;animation:quoteFade .2s ease forwards}
+.mp-entry{padding:8px 0;border-bottom:1px solid var(--border)}
+.mp-entry:last-child{border-bottom:none}
+.mp-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.mp-em{font-size:20px}
+.mp-mood{font-weight:800;font-size:13px;text-transform:capitalize}
+.mp-focus{font-size:12px;font-weight:700;color:var(--primary)}
+.mp-time{font-size:11px;color:#bbb;font-weight:700}
+.mp-quote{font-size:11px;font-style:italic;color:var(--muted);line-height:1.4;margin-top:4px;padding-left:4px;border-left:2px solid var(--primary-light)}
 @media(max-width:768px){.main-layout{grid-template-columns:1fr}.sidebar{display:none}.stats-row{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.mood-grid{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
@@ -312,11 +327,12 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
       <div class="page" id="page-calendar">
         <div class="page-title">&#128197; Calendar</div>
         <div class="cal-nav">
-          <div style="display:flex;align-items:center;gap:10px;flex:1;justify-content:center">
+          <div style="display:flex;align-items:center;gap:8px;">
             <button class="nav-arr" onclick="changeMonth(-1)">&#8249;</button>
-            <div class="month-title" id="cal-title" style="min-width:200px;text-align:center"></div>
+            <div class="month-title" id="cal-title"></div>
             <button class="nav-arr" onclick="changeMonth(1)">&#8250;</button>
           </div>
+          <div style="flex:1"></div>
           <button class="btn" onclick="syncSheets()">&#128260; Sync Planner</button>
         </div>
         <div class="cal-grid">
@@ -761,7 +777,24 @@ function renderCal(){
     const SE_CAL={'ELA':'📖','Math':'📐','Science':'🔬','Social Studies':'🌍','French':'🇫🇷','Related Arts':'🎨','Other':'📌'};
     const pills=evs.slice(0,3).map(e=>`<div class="pill ${sC(e.subject)}" onclick="openModal('${key}')">${SE_CAL[e.subject]||'📌'} ${e.subject}: ${e.assignment}</div>`).join('');
     const more=evs.length>3?`<div style="font-size:10px;font-weight:800;color:var(--muted);padding:2px 4px">+${evs.length-3} more</div>`:'';
-    cell.innerHTML=dn+pills+more;body.appendChild(cell);
+    // Mood entries for this day
+    const dayMoods=moodL.filter(m=>m.date&&m.date.startsWith(key));
+    let moodHtml='';
+    if(dayMoods.length){
+      const latest=dayMoods[0];
+      const extra=dayMoods.length-1;
+      const popEntries=dayMoods.map(m=>{
+        const md=new Date(m.date);
+        const qHtml=m.quote&&m.quote.text?`<div class="mp-quote">&ldquo;${m.quote.text.substring(0,80)}${m.quote.text.length>80?'…':''}&rdquo;</div>`:'';
+        return`<div class="mp-entry"><div class="mp-row"><span class="mp-em">${m.emoji}</span><span class="mp-mood">${m.mood}</span><span class="mp-focus">🎯${m.focus}%</span></div><div class="mp-time">${fmtDateTime(md)}</div>${qHtml}</div>`;
+      }).join('');
+      moodHtml=`<div class="mood-cal-wrap" onclick="toggleMoodPop(event,'mp-${key}')">
+        <span class="mood-cal-em">${latest.emoji}</span>
+        ${extra>0?`<span class="mood-cal-badge">+${extra}</span>`:''}
+        <div class="mood-popover" id="mp-${key}">${popEntries}</div>
+      </div>`;
+    }
+    cell.innerHTML=dn+pills+more+moodHtml;body.appendChild(cell);
   }
 }
 function sC(s){s=(s||'').toLowerCase();if(s.includes('ela')||s.includes('english'))return's-ela';if(s.includes('math'))return's-math';if(s.includes('sci'))return's-sci';if(s.includes('social'))return's-ss';if(s.includes('french'))return's-fr';if(s.includes('art')||s.includes('related'))return's-ra';return's-oth';}
@@ -801,6 +834,19 @@ function openModal(key){
   document.getElementById('ev-modal').classList.add('open');
 }
 function closeModal(){document.getElementById('ev-modal').classList.remove('open');}
+
+function toggleMoodPop(e,id){
+  e.stopPropagation();
+  const pop=document.getElementById(id);if(!pop)return;
+  const wasOpen=pop.classList.contains('open');
+  // Close all open popovers first
+  document.querySelectorAll('.mood-popover.open').forEach(p=>p.classList.remove('open'));
+  if(!wasOpen)pop.classList.add('open');
+}
+// Close popovers when clicking elsewhere
+document.addEventListener('click',()=>{
+  document.querySelectorAll('.mood-popover.open').forEach(p=>p.classList.remove('open'));
+});
 
 function openModalForHW(hwId){
   // Find which date key this HW belongs to and open the modal
