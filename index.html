@@ -324,10 +324,10 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
   <div class="pin-card">
     <span class="pin-emoji" id="pin-emoji-icon">🎒</span>
     <h1 class="pin-title" id="pin-title">My Dashboard</h1>
-    <p class="pin-subtitle">Who are you?</p>
+    <p class="pin-subtitle">Select your name and enter your PIN</p>
     <div style="margin-bottom:20px">
       <select class="fi" id="name-select" onchange="onNameSelect()" style="width:100%;font-size:16px;padding:12px 16px;text-align:center;border-radius:14px;border:3px solid var(--border)">
-        <option value="">— pick your name —</option>
+        <option value="">— who are you? —</option>
         <option value="T">🎒 T</option>
         <option value="Rommel">👨‍👩‍👧 Rommel</option>
         <option value="Renee">👨‍👩‍👧 Renee</option>
@@ -337,19 +337,18 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
         <option value="Henry">🏫 Henry</option>
       </select>
     </div>
-    <div id="pin-entry-section" style="display:none">
-      <div class="pin-dots">
-        <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
-        <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
-      </div>
-      <div class="pin-keypad">
-        <button class="pin-key" onclick="pp('1')">1</button><button class="pin-key" onclick="pp('2')">2</button><button class="pin-key" onclick="pp('3')">3</button>
-        <button class="pin-key" onclick="pp('4')">4</button><button class="pin-key" onclick="pp('5')">5</button><button class="pin-key" onclick="pp('6')">6</button>
-        <button class="pin-key" onclick="pp('7')">7</button><button class="pin-key" onclick="pp('8')">8</button><button class="pin-key" onclick="pp('9')">9</button>
-        <button class="pin-key empty"></button><button class="pin-key" onclick="pp('0')">0</button><button class="pin-key del" onclick="pd()">⌫</button>
-      </div>
-      <div class="pin-error" id="pin-err"></div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
     </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pp('1')">1</button><button class="pin-key" onclick="pp('2')">2</button><button class="pin-key" onclick="pp('3')">3</button>
+      <button class="pin-key" onclick="pp('4')">4</button><button class="pin-key" onclick="pp('5')">5</button><button class="pin-key" onclick="pp('6')">6</button>
+      <button class="pin-key" onclick="pp('7')">7</button><button class="pin-key" onclick="pp('8')">8</button><button class="pin-key" onclick="pp('9')">9</button>
+      <button class="pin-key empty"></button><button class="pin-key" onclick="pp('0')">0</button><button class="pin-key del" onclick="pd()">⌫</button>
+    </div>
+    <div class="pin-error" id="pin-err"></div>
+    <p class="pin-hint">Select your name first, then enter your PIN</p>
   </div>
 </div>
 
@@ -704,12 +703,11 @@ function wfb(cb){if(window._firebaseReady)cb();else document.addEventListener('f
 
 function onNameSelect(){
   const name=document.getElementById('name-select').value;
-  if(!name){document.getElementById('pin-entry-section').style.display='none';return;}
+  if(!name){currentUser=null;document.getElementById('pin-emoji-icon').textContent='🎒';return;}
   const user=TEAM.find(u=>u.name===name);
   if(!user)return;
   currentUser=user;
   document.getElementById('pin-emoji-icon').textContent=user.emoji;
-  document.getElementById('pin-entry-section').style.display='block';
   pinBuf='';updDots();document.getElementById('pin-err').textContent='';
 }
 function pp(d){if(pinBuf.length>=4)return;pinBuf+=d;updDots();if(pinBuf.length===4)setTimeout(checkPin,200);}
@@ -725,7 +723,7 @@ function updDots(){
   }
 }
 function checkPin(){
-  if(!currentUser){document.getElementById('pin-err').textContent='Please select your name first.';pinBuf='';updDots();return;}
+  if(!currentUser){document.getElementById('pin-err').textContent='Please select your name first ☝️';pinBuf='';updDots();return;}
   const storedPin=localStorage.getItem('pin_'+currentUser.name)||currentUser.pin;
   if(pinBuf===storedPin){
     role=currentUser.role;
@@ -743,7 +741,6 @@ function logout(){
   currentUser=null;
   document.getElementById('pin-err').textContent='';
   document.getElementById('name-select').value='';
-  document.getElementById('pin-entry-section').style.display='none';
   document.getElementById('pin-emoji-icon').textContent='🎒';
   document.getElementById('pin-screen').style.display='flex';
   document.getElementById('app').style.display='none';
