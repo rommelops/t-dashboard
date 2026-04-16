@@ -710,7 +710,14 @@ function onNameSelect(){
   document.getElementById('pin-emoji-icon').textContent=user.emoji;
   pinBuf='';updDots();document.getElementById('pin-err').textContent='';
 }
-function pp(d){if(pinBuf.length>=4)return;pinBuf+=d;updDots();if(pinBuf.length===4)setTimeout(checkPin,200);}
+function pp(d){
+  if(pinBuf.length>=4)return;
+  // Ensure select doesn't steal input
+  const sel=document.getElementById('name-select');
+  if(document.activeElement===sel)sel.blur();
+  pinBuf+=d;updDots();
+  if(pinBuf.length===4)setTimeout(checkPin,200);
+}
 function pd(){pinBuf=pinBuf.slice(0,-1);updDots();document.getElementById('pin-err').textContent='';}
 const PIN_EMOJIS=['🌟','🎯','🚀','🦄','🍕','🎸','🌈','🦊','🍦','🎃','🐼','🌸','⚡','🎮','🦋','🍩','🌙','🐙','🎨','🏆'];
 function randEmoji(){return PIN_EMOJIS[Math.floor(Math.random()*PIN_EMOJIS.length)];}
@@ -749,8 +756,14 @@ function logout(){
 
 document.addEventListener('keydown',function(e){
   if(document.getElementById('pin-screen').style.display==='none')return;
-  if(e.key>='0'&&e.key<='9')pp(e.key);
-  else if(e.key==='Backspace')pd();
+  if(e.key>='0'&&e.key<='9'){
+    // Blur select so it doesn't intercept digits
+    const sel=document.getElementById('name-select');
+    if(document.activeElement===sel)sel.blur();
+    e.preventDefault();
+    pp(e.key);
+  }
+  else if(e.key==='Backspace'&&document.activeElement!==document.getElementById('name-select'))pd();
   else if(e.key==='Enter'&&pinBuf.length===4)checkPin();
 });
 
