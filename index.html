@@ -230,6 +230,9 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
 .note-input:focus{border-color:var(--primary)}
 .note-submit{background:var(--primary);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-family:var(--font);font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap}
 .note-submit:hover{background:var(--primary-dark)}
+/* Quote fade */
+@keyframes quoteFade{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
+.quote-animate{animation:quoteFade .5s ease forwards}
 @media(max-width:768px){.main-layout{grid-template-columns:1fr}.sidebar{display:none}.stats-row{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.mood-grid{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
@@ -348,6 +351,15 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
       <!-- MOOD -->
       <div class="page" id="page-mood">
         <div class="page-title">&#128522; Mood &amp; Focus <span id="mood-ro-badge" style="display:none" class="teacher-ro-badge">View Only</span></div>
+
+        <!-- Quote card -->
+        <div id="quote-card" style="background:linear-gradient(135deg,#5b6af5,#7b8ff7);border-radius:var(--r);padding:24px 28px;margin-bottom:20px;color:#fff;box-shadow:var(--shlg);position:relative;min-height:100px;transition:all .3s">
+          <div style="font-size:36px;opacity:.3;position:absolute;top:14px;left:18px;line-height:1">&#8220;</div>
+          <div id="quote-text" style="font-size:var(--fslg);font-weight:700;line-height:1.6;padding:0 20px;font-style:italic;transition:opacity .5s">Loading your quote...</div>
+          <div id="quote-author" style="font-size:12px;font-weight:800;opacity:.75;margin-top:10px;padding:0 20px;transition:opacity .5s"></div>
+          <div id="quote-status" style="font-size:11px;opacity:.5;margin-top:6px;padding:0 20px"></div>
+        </div>
+
         <div class="card" style="margin-bottom:20px">
           <div class="card-title">How are you feeling right now?</div>
           <div class="mood-grid">
@@ -417,6 +429,13 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
               <div class="opt-btn active" id="btn-sz-normal" onclick="setSize('normal',this)">Normal<br><span style="font-size:11px;opacity:.6">Default</span></div>
               <div class="opt-btn" id="btn-sz-large" onclick="setSize('large',this)" style="font-size:16px">Large<br><span style="font-size:11px;opacity:.6">A bit bigger</span></div>
               <div class="opt-btn" id="btn-sz-xlarge" onclick="setSize('xlarge',this)" style="font-size:19px">Extra Large<br><span style="font-size:11px;opacity:.6">Biggest</span></div>
+            </div>
+          </div>
+          <div class="set-row">
+            <div class="set-lbl">&#128336; Time Format</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:300px">
+              <div class="opt-btn active" id="btn-tf-12" onclick="setTimeFormat('12',this)">12-hour<br><span style="font-size:11px;opacity:.6">3:30 PM</span></div>
+              <div class="opt-btn" id="btn-tf-24" onclick="setTimeFormat('24',this)">24-hour<br><span style="font-size:11px;opacity:.6">15:30</span></div>
             </div>
           </div>
         </div>
@@ -506,7 +525,7 @@ const FID='student_main';
 let PINS={student:localStorage.getItem('pin_student')||'1234',parent:localStorage.getItem('pin_parent')||'9999',teacher:localStorage.getItem('pin_teacher')||'5678'};
 let role='student',pinBuf='';
 let calY,calM,calEv={},hw=[],moodL=[],rems=[];
-let curMood=null,curMoodEm=null;
+let curMood=null,curMoodEm=null,curQuote=null;
 
 function wfb(cb){if(window._firebaseReady)cb();else document.addEventListener('firebaseReady',cb,{once:true});}
 
@@ -595,22 +614,38 @@ function applyName(){
   document.getElementById('pin-title').textContent=n;
 }
 function applyPrefs(){
-  const fn=localStorage.getItem('pf')||'nunito';const sz=localStorage.getItem('ps')||'normal';
+  const fn=localStorage.getItem('pf')||'nunito';const sz=localStorage.getItem('ps')||'normal';const tf=localStorage.getItem('time_fmt')||'12';
   applyFn(fn);applySz(sz);
   document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('active'));
-  const fb=document.getElementById('btn-fn-'+fn);const sb=document.getElementById('btn-sz-'+sz);
-  if(fb)fb.classList.add('active');if(sb)sb.classList.add('active');
+  const fb=document.getElementById('btn-fn-'+fn);const sb=document.getElementById('btn-sz-'+sz);const tb=document.getElementById('btn-tf-'+tf);
+  if(fb)fb.classList.add('active');if(sb)sb.classList.add('active');if(tb)tb.classList.add('active');
 }
 function applyFn(f){document.body.classList.remove('fn-nunito','fn-comic','fn-atkinson');document.body.classList.add('fn-'+f);}
 function applySz(s){document.body.classList.remove('sz-normal','sz-large','sz-xlarge');document.body.classList.add('sz-'+s);}
 function setFont(f,el){applyFn(f);localStorage.setItem('pf',f);document.querySelectorAll('[id^="btn-fn-"]').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
 function setSize(s,el){applySz(s);localStorage.setItem('ps',s);document.querySelectorAll('[id^="btn-sz-"]').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+function setTimeFormat(fmt,el){localStorage.setItem('time_fmt',fmt);document.querySelectorAll('[id^="btn-tf-"]').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+function getTimeFormat(){return localStorage.getItem('time_fmt')||'12';}
+function fmtTime(dateObj){
+  const fmt=getTimeFormat();
+  if(fmt==='24'){
+    const h=String(dateObj.getHours()).padStart(2,'0');
+    const m=String(dateObj.getMinutes()).padStart(2,'0');
+    return h+':'+m;
+  }
+  return dateObj.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+}
+function fmtDateTime(dateObj){
+  const date=dateObj.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return date+' '+fmtTime(dateObj);
+}
 
 function showPage(p,el){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');el.classList.add('active');
   if(p==='progress')renderProgress();
+  if(p==='mood')loadInstantQuote();
 }
 
 async function syncSheets(){
@@ -743,7 +778,7 @@ function openModal(key){
     const notesHtml=notesList.map(n=>`
       <div class="note-bubble">
         <span class="note-chip ${n.role}">${n.role==='student'?'🎒':(n.role==='teacher'?'🏫 '+(n.initials||''):'👨‍👩‍👧 '+(n.initials||''))}</span>
-        <div><div class="note-body">${n.text}</div><div class="note-ts">${new Date(n.ts).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div></div>
+        <div><div class="note-body">${n.text}</div><div class="note-ts">${fmtDateTime(new Date(n.ts))}</div></div>
       </div>`).join('');
     return`<div class="ev-detail" id="ev-${i}">
       <div style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
@@ -792,7 +827,7 @@ function buildNoteModalContent(item){
   const notesHtml=notesList.map(n=>`
     <div class="note-bubble">
       <span class="note-chip ${n.role}">${n.role==='student'?'🎒':(n.role==='teacher'?'🏫 '+(n.initials||''):'👨‍👩‍👧 '+(n.initials||''))}</span>
-      <div><div class="note-body">${n.text}</div><div class="note-ts">${new Date(n.ts).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div></div>
+      <div><div class="note-body">${n.text}</div><div class="note-ts">${fmtDateTime(new Date(n.ts))}</div></div>
     </div>`).join('');
   return`<div class="ev-detail">
     <div class="ev-row"><span class="ev-lbl">Subject</span><span>${sBdg(item.subject||'Other')}</span></div>
@@ -918,16 +953,101 @@ function fmtDate(ds){
   return'&#128197; Due '+d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
 }
 
+
+// ── QUOTES ──────────────────────────────────────────────────────
+const QUOTES=[
+  // ADHD-specific
+  {text:"Having ADHD, and taking action, is not a sign of weakness. It's actually a sign of incredible strength.",author:"Edward Hallowell"},
+  {text:"ADHD is not a problem of knowing what to do. It's a problem of doing what you know.",author:"Russell Barkley"},
+  {text:"Your brain works differently, and that's your superpower.",author:""},
+  {text:"Progress, not perfection. One small step is still a step forward.",author:""},
+  {text:"The ADHD mind is not broken. It's brilliant in ways the world is still learning to appreciate.",author:""},
+  {text:"You don't have to be perfect to be amazing.",author:""},
+  {text:"Every expert was once a beginner. Every pro was once an amateur.",author:"Robin Sharma"},
+  // Uplifting general
+  {text:"You are braver than you believe, stronger than you seem, and smarter than you think.",author:"A.A. Milne"},
+  {text:"It always seems impossible until it's done.",author:"Nelson Mandela"},
+  {text:"Believe you can and you're halfway there.",author:"Theodore Roosevelt"},
+  {text:"Start where you are. Use what you have. Do what you can.",author:"Arthur Ashe"},
+  {text:"You don't have to be great to start, but you have to start to be great.",author:"Zig Ziglar"},
+  {text:"The secret of getting ahead is getting started.",author:"Mark Twain"},
+  {text:"What you do today can improve all your tomorrows.",author:"Ralph Marston"},
+  {text:"Little by little, a little becomes a lot.",author:"Tanzanian Proverb"},
+  {text:"You are enough, just as you are.",author:"Meghan Markle"},
+  {text:"The only way to do great work is to love what you do.",author:"Steve Jobs"},
+  {text:"Done is better than perfect.",author:"Sheryl Sandberg"},
+  {text:"Mistakes are proof that you are trying.",author:""},
+  {text:"Every day is a chance to be a little better than yesterday.",author:""},
+  {text:"Your speed doesn't matter. Forward is forward.",author:""},
+  {text:"Hard things take time. Easy things don't matter as much.",author:""},
+  {text:"You've survived 100% of your worst days so far.",author:""},
+  {text:"Focus on the step in front of you, not the whole staircase.",author:""},
+  {text:"One task at a time. One moment at a time. You've got this.",author:""},
+];
+
+let quoteTimeout=null;
+
+function getRandomQuote(){return QUOTES[Math.floor(Math.random()*QUOTES.length)];}
+
+function showQuote(q,status=''){
+  const qt=document.getElementById('quote-text');
+  const qa=document.getElementById('quote-author');
+  const qs=document.getElementById('quote-status');
+  curQuote={text:q.text,author:q.author||'',type:status.includes('Personalized')||status.includes('personalized')?'personalized':'curated'};
+  qt.style.opacity='0';qa.style.opacity='0';
+  setTimeout(()=>{
+    qt.textContent=q.text;
+    qa.textContent=q.author?'— '+q.author:'';
+    qs.textContent=status;
+    qt.style.opacity='1';qa.style.opacity='1';
+    qt.classList.remove('quote-animate');void qt.offsetWidth;qt.classList.add('quote-animate');
+  },300);
+}
+
+function loadInstantQuote(){
+  const q=getRandomQuote();
+  showQuote(q,'✨ Daily inspiration');
+}
+
+async function loadPersonalizedQuote(mood,focus){
+  if(!mood)return;
+  showQuote(getRandomQuote(),'⏳ Getting a message just for you...');
+  if(quoteTimeout)clearTimeout(quoteTimeout);
+  quoteTimeout=setTimeout(async()=>{
+    try{
+      const res=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:1000,
+          system:'You write short, warm, encouraging messages for a child aged 9-16 who has ADHD. Keep it to 1-2 sentences max, conversational and age-appropriate. Never mention ADHD directly. Be genuine, not cheesy. End with one tiny actionable idea.',
+          messages:[{role:'user',content:`The student is feeling "${mood}" today with a focus level of ${focus}% out of 100. Write them a short personalized encouraging message. Reply with ONLY the message text, no quotes, no attribution.`}]
+        })
+      });
+      if(!res.ok)throw new Error('API error');
+      const data=await res.json();
+      const text=data.content?.[0]?.text?.trim();
+      if(text)showQuote({text,author:'— Just for you ✨'},'🤖 Personalized for you');
+    }catch(e){
+      // Silently fall back — hardcoded quote is already showing
+      document.getElementById('quote-status').textContent='✨ Daily inspiration';
+    }
+  },800);
+}
+
 function selMood(m,em,el){
   if(role==='teacher')return;
   curMood=m;curMoodEm=em;
   document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');
+  const focus=parseInt(document.getElementById('focus-slider').value);
+  loadPersonalizedQuote(m,focus);
 }
 async function saveMood(){
   if(role==='teacher')return;
   if(!curMood){alert('Pick a mood first!');return;}
   const focus=parseInt(document.getElementById('focus-slider').value);
-  const entry={mood:curMood,emoji:curMoodEm,focus,date:new Date().toISOString()};
+  const entry={mood:curMood,emoji:curMoodEm,focus,date:new Date().toISOString(),quote:curQuote||null};
   try{const ref=await fbAdd('moodLog',entry);moodL.unshift({id:ref.id,...entry});document.getElementById('greet-emoji').innerHTML=curMoodEm;renderMoodLog();updDash();alert('Mood saved!');}
   catch(e){alert('Could not save.');}
 }
@@ -936,7 +1056,20 @@ function renderMoodLog(){
   if(!moodL.length){log.innerHTML='<div class="empty"><span class="empty-icon">&#128522;</span><p>No entries yet!</p></div>';return;}
   log.innerHTML=moodL.slice(0,20).map(e=>{
     const d=new Date(e.date);
-    return`<div class="mood-entry"><div class="me-em">${e.emoji}</div><div class="me-info"><div style="font-weight:800;text-transform:capitalize;font-size:var(--fs)">${e.mood}</div><div class="me-date">${d.toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div></div><div class="me-focus">&#127919; ${e.focus}%</div></div>`;
+    const quoteHtml=e.quote&&e.quote.text?`
+      <div style="margin-top:8px;padding:10px 12px;background:#f8f9ff;border-left:3px solid var(--primary);border-radius:0 8px 8px 0">
+        <div style="font-size:12px;font-style:italic;color:var(--text);line-height:1.5">&ldquo;${e.quote.text}&rdquo;</div>
+        ${e.quote.author?`<div style="font-size:11px;color:var(--muted);font-weight:700;margin-top:4px">${e.quote.author}</div>`:''}
+        <div style="font-size:10px;color:#bbb;font-weight:700;margin-top:2px">${e.quote.type==='personalized'?'🤖 Personalized':'✨ Daily inspiration'}</div>
+      </div>`:'';
+    return`<div class="mood-entry" style="flex-direction:column;align-items:stretch;gap:0">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div class="me-em">${e.emoji}</div>
+        <div class="me-info"><div style="font-weight:800;text-transform:capitalize;font-size:var(--fs)">${e.mood}</div><div class="me-date">${fmtDateTime(d)}</div></div>
+        <div class="me-focus">&#127919; ${e.focus}%</div>
+      </div>
+      ${quoteHtml}
+    </div>`;
   }).join('');
 }
 
@@ -961,7 +1094,7 @@ function renderRems(){
   list.innerHTML=rems.map(r=>`
     <div class="rem-item ${r.priority}">
       <div style="font-size:22px">${PI[r.priority]||PI.medium}</div>
-      <div class="rem-info"><div class="rem-title">${r.text}</div>${r.time?`<div class="rem-time">&#128197; ${new Date(r.time).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div>`:''}</div>
+      <div class="rem-info"><div class="rem-title">${r.text}</div>${r.time?`<div class="rem-time">&#128197; ${fmtDateTime(new Date(r.time))}</div>`:''}</div>
       ${role!=='teacher'?`<button class="rem-del" onclick="delRem('${r.id}')">&#10005;</button>`:''}
     </div>`).join('');
 }
