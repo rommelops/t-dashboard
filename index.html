@@ -248,7 +248,73 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
 .mp-focus{font-size:12px;font-weight:700;color:var(--primary)}
 .mp-time{font-size:11px;color:#bbb;font-weight:700}
 .mp-quote{font-size:11px;font-style:italic;color:var(--muted);line-height:1.4;margin-top:4px;padding-left:4px;border-left:2px solid var(--primary-light)}
-@media(max-width:768px){.main-layout{grid-template-columns:1fr}.sidebar{display:none}.stats-row{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.mood-grid{grid-template-columns:repeat(3,1fr)}}
+/* ── Timer ── */
+.timer-panel{background:#fff;border-radius:var(--r);padding:22px;box-shadow:var(--sh);margin-bottom:20px}
+.timer-ring-wrap{display:flex;justify-content:center;margin:16px 0}
+.timer-svg{transform:rotate(-90deg)}
+.timer-track{fill:none;stroke:#f3f4f6;stroke-width:8}
+.timer-fill{fill:none;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .5s linear,stroke .5s}
+.timer-display{font-family:'Fredoka One',sans-serif;font-size:48px;color:var(--text);text-align:center;line-height:1;margin-bottom:4px}
+.timer-label{text-align:center;font-size:13px;font-weight:800;color:var(--muted);margin-bottom:16px;text-transform:uppercase;letter-spacing:.5px}
+.timer-controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.timer-dur-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.timer-dur-btn{border:2px solid var(--border);background:#fff;border-radius:20px;padding:5px 14px;font-family:var(--font);font-weight:800;font-size:13px;cursor:pointer;color:var(--muted);transition:all .2s}
+.timer-dur-btn.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
+/* ── Task breakdown ── */
+.steps-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.step-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f9fafb;border-radius:8px}
+.step-chk{width:20px;height:20px;border:2px solid var(--border);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;transition:all .2s}
+.step-chk.done{background:var(--green);border-color:var(--green);color:#fff}
+.step-txt{flex:1;font-size:13px;font-weight:600}
+.step-txt.done{text-decoration:line-through;opacity:.5}
+.step-prog{font-size:10px;font-weight:800;color:var(--primary);white-space:nowrap}
+.breakdown-add{display:flex;gap:6px;margin-top:8px}
+.breakdown-input{flex:1;border:2px solid var(--border);border-radius:8px;padding:7px 10px;font-family:var(--font);font-size:13px;font-weight:600;outline:none}
+.breakdown-input:focus{border-color:var(--primary)}
+/* ── Insights page ── */
+.insight-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+.insight-card{background:#fff;border-radius:var(--r);padding:18px;box-shadow:var(--sh);text-align:center}
+.insight-num{font-family:'Fredoka One',sans-serif;font-size:32px;color:var(--primary);line-height:1}
+.insight-lbl{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+.log-list{display:flex;flex-direction:column;gap:6px;max-height:400px;overflow-y:auto}
+.log-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-radius:var(--rs);box-shadow:0 2px 0 rgba(0,0,0,.06);font-size:13px}
+.log-icon{font-size:18px;flex-shrink:0;width:24px;text-align:center}
+.log-info{flex:1}
+.log-who{font-weight:800}
+.log-what{color:var(--muted);font-size:12px}
+.log-time{font-size:11px;color:#bbb;font-weight:700;white-space:nowrap}
+/* ── Mobile nav bar ── */
+#mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid var(--border);z-index:200;padding:6px 0 env(safe-area-inset-bottom,6px)}
+.mob-nav-inner{display:flex;justify-content:space-around;align-items:center}
+.mob-nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;border:none;background:none;cursor:pointer;color:var(--muted);font-family:var(--font);font-size:10px;font-weight:800;transition:color .2s;border-radius:8px;min-width:52px}
+.mob-nav-btn .mn-icon{font-size:22px;line-height:1}
+.mob-nav-btn.active{color:var(--primary)}
+.mob-nav-badge{background:var(--pink);color:#fff;border-radius:20px;padding:1px 6px;font-size:9px;font-weight:800;position:absolute;top:-4px;right:-2px}
+.mob-nav-icon-wrap{position:relative;display:inline-block}
+/* ── Mobile specific overrides ── */
+@media(max-width:768px){
+  .main-layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .two-col{grid-template-columns:1fr}
+  .mood-grid{grid-template-columns:repeat(3,1fr)}
+  #mobile-nav{display:block}
+  .content{padding:16px 14px 90px}
+  .header{padding:0 14px;height:58px}
+  .header-logo{font-size:20px}
+  .sync-status{display:none}
+  .icon-btn{padding:6px 10px;font-size:12px}
+  .page-title{font-size:24px}
+  .pin-card{padding:32px 24px;max-width:360px}
+  .pin-key{padding:20px 10px;font-size:28px}
+  .cal-cell{min-height:70px;padding:4px}
+  .cal-dname{padding:8px 2px;font-size:10px}
+  .hw-add-row{flex-direction:column}
+  .hw-add-row .fi,.hw-add-row .btn{width:100%}
+  .modal{border-radius:var(--r) var(--r) 0 0;max-height:90vh;margin-top:auto}
+  .modal-ov{align-items:flex-end;padding:0}
+  .timer-display{font-size:60px}
+}
 </style>
 </head>
 <body class="fn-nunito sz-normal">
@@ -256,26 +322,34 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
 <!-- PIN SCREEN -->
 <div id="pin-screen">
   <div class="pin-card">
-    <span class="pin-emoji">&#127890;</span>
+    <span class="pin-emoji" id="pin-emoji-icon">🎒</span>
     <h1 class="pin-title" id="pin-title">My Dashboard</h1>
-    <p class="pin-subtitle">Who's logging in?</p>
-    <div class="pin-who">
-      <button class="pin-who-btn active" onclick="setWho('student')">&#127890; Student</button>
-      <button class="pin-who-btn" onclick="setWho('parent')">&#128106; Parent</button>
-      <button class="pin-who-btn" onclick="setWho('teacher')">&#127979; Teacher</button>
+    <p class="pin-subtitle">Who are you?</p>
+    <div style="margin-bottom:20px">
+      <select class="fi" id="name-select" onchange="onNameSelect()" style="width:100%;font-size:16px;padding:12px 16px;text-align:center;border-radius:14px;border:3px solid var(--border)">
+        <option value="">— pick your name —</option>
+        <option value="T">🎒 T</option>
+        <option value="Rommel">👨‍👩‍👧 Rommel</option>
+        <option value="Renee">👨‍👩‍👧 Renee</option>
+        <option value="Deb">🧠 Deb</option>
+        <option value="Max">🏫 Max</option>
+        <option value="Emily">🏫 Emily</option>
+        <option value="Henry">🏫 Henry</option>
+      </select>
     </div>
-    <div class="pin-dots">
-      <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
-      <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+    <div id="pin-entry-section" style="display:none">
+      <div class="pin-dots">
+        <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+        <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+      </div>
+      <div class="pin-keypad">
+        <button class="pin-key" onclick="pp('1')">1</button><button class="pin-key" onclick="pp('2')">2</button><button class="pin-key" onclick="pp('3')">3</button>
+        <button class="pin-key" onclick="pp('4')">4</button><button class="pin-key" onclick="pp('5')">5</button><button class="pin-key" onclick="pp('6')">6</button>
+        <button class="pin-key" onclick="pp('7')">7</button><button class="pin-key" onclick="pp('8')">8</button><button class="pin-key" onclick="pp('9')">9</button>
+        <button class="pin-key empty"></button><button class="pin-key" onclick="pp('0')">0</button><button class="pin-key del" onclick="pd()">⌫</button>
+      </div>
+      <div class="pin-error" id="pin-err"></div>
     </div>
-    <div class="pin-keypad">
-      <button class="pin-key" onclick="pp('1')">1</button><button class="pin-key" onclick="pp('2')">2</button><button class="pin-key" onclick="pp('3')">3</button>
-      <button class="pin-key" onclick="pp('4')">4</button><button class="pin-key" onclick="pp('5')">5</button><button class="pin-key" onclick="pp('6')">6</button>
-      <button class="pin-key" onclick="pp('7')">7</button><button class="pin-key" onclick="pp('8')">8</button><button class="pin-key" onclick="pp('9')">9</button>
-      <button class="pin-key empty"></button><button class="pin-key" onclick="pp('0')">0</button><button class="pin-key del" onclick="pd()">&#9003;</button>
-    </div>
-    <div class="pin-error" id="pin-err"></div>
-    <p class="pin-hint" id="pin-hint">Student default PIN: 1234</p>
   </div>
 </div>
 
@@ -301,6 +375,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
       <div class="nav-item" onclick="showPage('progress',this)"><span class="nav-icon">&#128200;</span> Progress</div>
       <div class="nav-lbl">More</div>
       <div class="nav-item" onclick="showPage('notes',this)"><span class="nav-icon">&#128221;</span> Teacher Notes</div>
+      <div class="nav-item" id="nav-insights" style="display:none" onclick="showPage('insights',this)"><span class="nav-icon">📊</span> Insights</div>
       <div class="nav-item" onclick="showPage('settings',this)"><span class="nav-icon">&#9881;</span> Settings</div>
     </nav>
     <main class="content">
@@ -360,6 +435,34 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
             <button class="btn green" onclick="addHW()">+ Add</button>
           </div>
           <div class="hw-note">&#128197; Assignments from your teacher's planner appear automatically. You can also add your own tasks above.</div>
+        </div>
+        <!-- Focus Timer -->
+        <div class="timer-panel" id="timer-panel">
+          <div class="card-title" style="margin-bottom:12px">⏱️ Focus Timer</div>
+          <div class="timer-dur-row">
+            <span style="font-size:12px;font-weight:800;color:var(--muted)">Work:</span>
+            <button class="timer-dur-btn" onclick="setTimerDur(15,this)">15m</button>
+            <button class="timer-dur-btn active" onclick="setTimerDur(25,this)">25m</button>
+            <button class="timer-dur-btn" onclick="setTimerDur(30,this)">30m</button>
+            <button class="timer-dur-btn" onclick="setTimerDur(45,this)">45m</button>
+            <button class="timer-dur-btn" onclick="setTimerDur(60,this)">60m</button>
+          </div>
+          <div class="timer-ring-wrap">
+            <div style="position:relative;width:160px;height:160px">
+              <svg class="timer-svg" width="160" height="160" viewBox="0 0 160 160">
+                <circle class="timer-track" cx="80" cy="80" r="68"/>
+                <circle class="timer-fill" id="timer-ring" cx="80" cy="80" r="68" stroke-dasharray="427" stroke-dashoffset="0" stroke="var(--green)"/>
+              </svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                <div class="timer-display" id="timer-display">25:00</div>
+              </div>
+            </div>
+          </div>
+          <div class="timer-label" id="timer-label">Ready to focus</div>
+          <div class="timer-controls">
+            <button class="btn green" id="timer-start-btn" onclick="timerStart()">▶ Start</button>
+            <button class="btn" style="background:#f3f4f6;color:var(--text);box-shadow:0 3px 0 #ddd" onclick="timerReset()">↺ Reset</button>
+          </div>
         </div>
         <div class="hw-list" id="hw-list"></div>
       </div>
@@ -421,6 +524,37 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
       <div class="page" id="page-notes">
         <div class="page-title">&#128221; Teacher Notes</div>
         <div class="notes-grid" id="notes-grid"><div class="empty" style="grid-column:1/-1"><span class="empty-icon">&#128221;</span><p>Sync the planner to see notes here!</p></div></div>
+      </div>
+
+      <!-- INSIGHTS (Rommel only) -->
+      <div class="page" id="page-insights">
+        <div class="page-title">📊 Insights</div>
+        <div class="insight-grid" id="insight-stats"></div>
+        <div class="card">
+          <div class="card-title">📋 Activity Log</div>
+          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+            <select class="fi" id="log-filter" onchange="filterLogs()" style="font-size:13px;padding:7px 12px">
+              <option value="all">All activity</option>
+              <option value="login">Logins</option>
+              <option value="homework_completed">Homework</option>
+              <option value="mood_logged">Mood entries</option>
+              <option value="note_added">Notes</option>
+              <option value="timer_completed">Timer sessions</option>
+              <option value="task_breakdown">Task breakdowns</option>
+            </select>
+            <select class="fi" id="log-user-filter" onchange="filterLogs()" style="font-size:13px;padding:7px 12px">
+              <option value="all">All users</option>
+              <option value="T">T (student)</option>
+              <option value="Rommel">Rommel</option>
+              <option value="Renee">Renee</option>
+              <option value="Deb">Deb</option>
+              <option value="Max">Max</option>
+              <option value="Emily">Emily</option>
+              <option value="Henry">Henry</option>
+            </select>
+          </div>
+          <div class="log-list" id="log-list"></div>
+        </div>
       </div>
 
       <!-- SETTINGS -->
@@ -526,6 +660,27 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
   </div>
 </div>
 
+<!-- MOBILE NAV -->
+<div id="mobile-nav">
+  <div class="mob-nav-inner">
+    <button class="mob-nav-btn active" onclick="showPage('home',this);setMobNav(this)" id="mnav-home">
+      <span class="mn-icon">🏠</span><span>Home</span>
+    </button>
+    <button class="mob-nav-btn" onclick="showPage('calendar',this);setMobNav(this)" id="mnav-cal">
+      <span class="mn-icon">📅</span><span>Calendar</span>
+    </button>
+    <button class="mob-nav-btn" onclick="showPage('homework',this);setMobNav(this)" id="mnav-hw">
+      <span class="mob-nav-icon-wrap"><span class="mn-icon">📚</span><span class="mob-nav-badge" id="mob-hw-badge" style="display:none">0</span></span><span>Homework</span>
+    </button>
+    <button class="mob-nav-btn" onclick="showPage('mood',this);setMobNav(this)" id="mnav-mood">
+      <span class="mn-icon">😊</span><span>Mood</span>
+    </button>
+    <button class="mob-nav-btn" onclick="showPage('settings',this);setMobNav(this)" id="mnav-set">
+      <span class="mn-icon">⚙️</span><span>More</span>
+    </button>
+  </div>
+</div>
+
 <!-- MODAL -->
 <div class="modal-ov" id="ev-modal">
   <div class="modal">
@@ -538,21 +693,23 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
 const SHEET_ID_DEFAULT='10VyvPxVKXRM3fbg5b3sy2MANACKP-ehp3OFEbei2dMQ';
 const FID='student_main';
 
-let PINS={student:localStorage.getItem('pin_student')||'1234',parent:localStorage.getItem('pin_parent')||'9999',teacher:localStorage.getItem('pin_teacher')||'5678'};
-let role='student',pinBuf='';
-let calY,calM,calEv={},hw=[],moodL=[],rems=[];
+const TEAM=[{"name": "T", "role": "student", "pin": "1234", "initials": "T", "emoji": "\ud83c\udf92"}, {"name": "Rommel", "role": "parent", "pin": "9999", "initials": "RO", "emoji": "\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67"}, {"name": "Renee", "role": "parent", "pin": "8888", "initials": "RE", "emoji": "\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67"}, {"name": "Deb", "role": "counselor", "pin": "7777", "initials": "DB", "emoji": "\ud83e\udde0"}, {"name": "Max", "role": "teacher", "pin": "5678", "initials": "MX", "emoji": "\ud83c\udfeb"}, {"name": "Emily", "role": "teacher", "pin": "5679", "initials": "EM", "emoji": "\ud83c\udfeb"}, {"name": "Henry", "role": "teacher", "pin": "5680", "initials": "HN", "emoji": "\ud83c\udfeb"}];
+
+let currentUser=null,pinBuf='';
+let role='student';
+let calY,calM,calEv={},hw=[],moodL=[],rems=[],usageLogs=[];
 let curMood=null,curMoodEm=null,curQuote=null;
 
 function wfb(cb){if(window._firebaseReady)cb();else document.addEventListener('firebaseReady',cb,{once:true});}
 
-function setWho(r){
-  role=r;
-  document.querySelectorAll('.pin-who-btn').forEach(b=>b.classList.remove('active','teacher-active'));
-  const idx={student:0,parent:1,teacher:2}[r];
-  const cls=r==='teacher'?'teacher-active':'active';
-  document.querySelectorAll('.pin-who-btn')[idx].classList.add(cls);
-  const hints={student:'Student default PIN: 1234',parent:'Parent default PIN: 9999',teacher:'Teacher default PIN: 5678'};
-  document.getElementById('pin-hint').textContent=hints[r];
+function onNameSelect(){
+  const name=document.getElementById('name-select').value;
+  if(!name){document.getElementById('pin-entry-section').style.display='none';return;}
+  const user=TEAM.find(u=>u.name===name);
+  if(!user)return;
+  currentUser=user;
+  document.getElementById('pin-emoji-icon').textContent=user.emoji;
+  document.getElementById('pin-entry-section').style.display='block';
   pinBuf='';updDots();document.getElementById('pin-err').textContent='';
 }
 function pp(d){if(pinBuf.length>=4)return;pinBuf+=d;updDots();if(pinBuf.length===4)setTimeout(checkPin,200);}
@@ -568,7 +725,10 @@ function updDots(){
   }
 }
 function checkPin(){
-  if(pinBuf===PINS[role]){
+  if(!currentUser){document.getElementById('pin-err').textContent='Please select your name first.';pinBuf='';updDots();return;}
+  const storedPin=localStorage.getItem('pin_'+currentUser.name)||currentUser.pin;
+  if(pinBuf===storedPin){
+    role=currentUser.role;
     document.getElementById('pin-screen').style.display='none';
     document.getElementById('app').style.display='block';
     initApp();
@@ -578,7 +738,17 @@ function checkPin(){
     const c=document.querySelector('.pin-card');c.style.animation='none';c.offsetHeight;c.style.animation='shake 0.4s ease';
   }
 }
-function logout(){pinBuf='';updDots();document.getElementById('pin-err').textContent='';document.getElementById('pin-screen').style.display='flex';document.getElementById('app').style.display='none';}
+function logout(){
+  pinBuf='';updDots();
+  currentUser=null;
+  document.getElementById('pin-err').textContent='';
+  document.getElementById('name-select').value='';
+  document.getElementById('pin-entry-section').style.display='none';
+  document.getElementById('pin-emoji-icon').textContent='🎒';
+  document.getElementById('pin-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  timerReset();
+}
 
 document.addEventListener('keydown',function(e){
   if(document.getElementById('pin-screen').style.display==='none')return;
@@ -592,22 +762,26 @@ function initApp(){
   applyName();applyPrefs();
   // Role badge
   const rb=document.getElementById('role-badge');
-  const roleLabels={student:'Student',parent:'Parent',teacher:'Teacher'};
-  rb.textContent=roleLabels[role];
-  rb.className='role-badge'+(role==='parent'?' parent':role==='teacher'?' teacher':'');
+  const roleEmoji={student:'🎒',parent:'👨‍👩‍👧',teacher:'🏫',counselor:'🧠'};
+  rb.textContent=(roleEmoji[role]||'')+'  '+(currentUser?currentUser.name:role);
+  rb.className='role-badge'+(role==='parent'?' parent':role==='teacher'?' teacher':role==='counselor'?' teacher':'');
   // Show/hide role-specific sections
-  document.getElementById('parent-settings').style.display=role==='parent'?'block':'none';
-  document.getElementById('teacher-settings-note').style.display=role==='teacher'?'block':'none';
-  // Teacher read-only badges
+  const isParent=role==='parent';
+  const isTeacher=role==='teacher'||role==='counselor';
+  const isRommel=currentUser&&currentUser.name==='Rommel';
+  document.getElementById('parent-settings').style.display=isParent?'block':'none';
+  document.getElementById('teacher-settings-note').style.display=isTeacher?'block':'none';
+  document.getElementById('nav-insights').style.display=isRommel?'flex':'none';
   ['hw','mood','rem'].forEach(id=>{
     const el=document.getElementById(id+'-ro-badge');
-    if(el)el.style.display=role==='teacher'?'inline-block':'none';
+    if(el)el.style.display=isTeacher?'inline-block':'none';
   });
-  // Hide add sections for teacher
   ['hw-add-section','mood-save-section','rem-add-section'].forEach(id=>{
     const el=document.getElementById(id);
-    if(el)el.style.display=role==='teacher'?'none':'block';
+    if(el)el.style.display=isTeacher?'none':'block';
   });
+  // Log the login event
+  logEvent('login',currentUser?currentUser.name:'unknown',{role});
   // Greeting
   const hr=now.getHours();
   document.getElementById('greet').textContent=(hr<12?'Good morning':hr<17?'Good afternoon':'Good evening')+' &#128075;';
@@ -617,7 +791,7 @@ function initApp(){
   if(role==='parent'){
     document.getElementById('set-name').value=localStorage.getItem('student_name')||'';
     document.getElementById('set-sheet-id').value=localStorage.getItem('sheet_id')||SHEET_ID_DEFAULT;
-    document.getElementById('set-parent-initials').value=localStorage.getItem('initials_parent')||'';
+    document.getElementById('set-parent-initials').value=currentUser?currentUser.initials:(localStorage.getItem('initials_parent')||'');
     document.getElementById('set-teacher-initials').value=localStorage.getItem('initials_teacher')||'';
   }
   const cached=localStorage.getItem('calEv');if(cached)calEv=JSON.parse(cached);
@@ -626,7 +800,7 @@ function initApp(){
 
 function applyName(){
   const n=localStorage.getItem('student_name')||'My Dashboard';
-  document.getElementById('hdr-name').textContent=n;
+  document.getElementById('hdr-name').textContent=currentUser?currentUser.name:(n||'My Dashboard');
   document.getElementById('pin-title').textContent=n;
 }
 function applyPrefs(){
@@ -662,6 +836,7 @@ function showPage(p,el){
   document.getElementById('page-'+p).classList.add('active');el.classList.add('active');
   if(p==='progress')renderProgress();
   if(p==='mood')loadInstantQuote();
+  if(p==='insights')renderInsights();
 }
 
 async function syncSheets(){
@@ -924,6 +1099,7 @@ async function saveNote(hwId,text){
   item.userNotes.push(note);
   try{
     await fbSet('homework',hwId,{userNotes:item.userNotes});
+    logEvent('note_added',currentUser?currentUser.name:'unknown',{role});
     renderHW();
   }catch(e){console.error('Note save error:',e);}
 }
@@ -935,7 +1111,11 @@ async function fbDel(col,id){const{doc,deleteDoc}=window._firebase;await deleteD
 async function fbList(col){const{collection,getDocs}=window._firebase;const s=await getDocs(collection(window._db,'students',FID,col));return s.docs.map(d=>({id:d.id,...d.data()}));}
 
 async function loadFB(){
-  try{[hw,moodL,rems]=await Promise.all([fbList('homework'),fbList('moodLog'),fbList('reminders')]);renderCal();renderHW();renderMoodLog();renderRems();renderProgress();updDash();}
+  try{
+    [hw,moodL,rems]=await Promise.all([fbList('homework'),fbList('moodLog'),fbList('reminders')]);
+    await loadLogs();
+    renderCal();renderHW();renderMoodLog();renderRems();renderProgress();updDash();
+  }
   catch(e){console.error('FB load error:',e);}
 }
 
@@ -956,7 +1136,7 @@ async function addHW(){
 async function toggleHW(id){
   if(role==='teacher')return;
   const item=hw.find(h=>h.id===id);if(!item)return;item.done=!item.done;
-  try{await fbSet('homework',id,{done:item.done});renderHW();renderProgress();updDash();}catch(e){console.error(e);}
+  try{await fbSet('homework',id,{done:item.done});if(item.done)logEvent('homework_completed',currentUser?currentUser.name:'unknown',{subject:item.subject||'Unknown'});renderHW();renderProgress();updDash();}catch(e){console.error(e);}
 }
 async function toggleHWfromModal(id){
   await toggleHW(id);
@@ -1008,6 +1188,189 @@ function fmtDate(ds){
   return'&#128197; Due '+d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
 }
 
+
+
+// ── USAGE LOGGING ───────────────────────────────────────────────
+async function logEvent(event,user,detail={}){
+  if(!window._firebaseReady)return;
+  try{
+    const{collection,addDoc}=window._firebase;
+    const entry={event,user:user||'unknown',role,detail,ts:new Date().toISOString()};
+    await addDoc(collection(window._db,'usageLogs'),entry);
+    usageLogs.unshift(entry);
+    if(document.getElementById('page-insights').classList.contains('active'))renderInsights();
+  }catch(e){console.error('Log error:',e);}
+}
+
+async function loadLogs(){
+  try{
+    const{collection,getDocs}=window._firebase;
+    const snap=await getDocs(collection(window._db,'usageLogs'));
+    usageLogs=snap.docs.map(d=>({id:d.id,...d.data()}));
+    usageLogs.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  }catch(e){console.error('Load logs error:',e);}
+}
+
+const LOG_ICONS={login:'🔑',homework_completed:'✅',mood_logged:'😊',note_added:'💬',timer_completed:'⏱️',task_breakdown:'🧩',default:'📋'};
+const EVENT_LABELS={login:'logged in',homework_completed:'completed homework',mood_logged:'logged mood',note_added:'added a note',timer_completed:'completed a focus session',task_breakdown:'broke down a task'};
+
+function renderInsights(){
+  // Stats
+  const today=new Date().toISOString().split('T')[0];
+  const todayLogs=usageLogs.filter(l=>l.ts.startsWith(today));
+  const logins=usageLogs.filter(l=>l.event==='login');
+  const hwDone=usageLogs.filter(l=>l.event==='homework_completed');
+  const moods=usageLogs.filter(l=>l.event==='mood_logged');
+  const timers=usageLogs.filter(l=>l.event==='timer_completed');
+  document.getElementById('insight-stats').innerHTML=[
+    {n:todayLogs.length,l:'Today's events'},
+    {n:logins.length,l:'Total logins'},
+    {n:hwDone.length,l:'Tasks completed'},
+    {n:moods.length,l:'Mood entries'},
+    {n:timers.length,l:'Timer sessions'},
+    {n:usageLogs.filter(l=>l.event==='note_added').length,l:'Notes added'},
+  ].map(s=>`<div class="insight-card"><div class="insight-num">${s.n}</div><div class="insight-lbl">${s.l}</div></div>`).join('');
+  filterLogs();
+}
+
+function filterLogs(){
+  const evFilter=document.getElementById('log-filter')?.value||'all';
+  const usrFilter=document.getElementById('log-user-filter')?.value||'all';
+  let filtered=usageLogs;
+  if(evFilter!=='all')filtered=filtered.filter(l=>l.event===evFilter);
+  if(usrFilter!=='all')filtered=filtered.filter(l=>l.user===usrFilter);
+  const list=document.getElementById('log-list');if(!list)return;
+  if(!filtered.length){list.innerHTML='<div class="empty"><span class="empty-icon">📋</span><p>No activity yet</p></div>';return;}
+  list.innerHTML=filtered.slice(0,100).map(l=>{
+    const d=new Date(l.ts);
+    const icon=LOG_ICONS[l.event]||LOG_ICONS.default;
+    const what=EVENT_LABELS[l.event]||l.event;
+    const detail=l.detail&&Object.keys(l.detail).length?Object.entries(l.detail).map(([k,v])=>`${k}: ${v}`).join(', '):'';
+    return`<div class="log-row"><div class="log-icon">${icon}</div><div class="log-info"><div class="log-who">${l.user}</div><div class="log-what">${what}${detail?' — '+detail:''}</div></div><div class="log-time">${fmtDateTime(d)}</div></div>`;
+  }).join('');
+}
+
+
+// ── FOCUS TIMER ─────────────────────────────────────────────────
+let timerDur=25,timerBreak=5,timerSecs=25*60,timerInterval=null,timerRunning=false,timerIsBreak=false;
+const TIMER_CIRC=2*Math.PI*68;
+
+function setTimerDur(min,el){
+  if(timerRunning)return;
+  timerDur=min;timerBreak=min<=15?3:min<=25?5:10;
+  timerSecs=min*60;
+  document.querySelectorAll('.timer-dur-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  timerReset();
+}
+
+function timerStart(){
+  if(timerRunning){timerPause();return;}
+  timerRunning=true;
+  document.getElementById('timer-start-btn').textContent='⏸ Pause';
+  timerInterval=setInterval(timerTick,1000);
+}
+
+function timerPause(){
+  timerRunning=false;
+  document.getElementById('timer-start-btn').textContent='▶ Resume';
+  clearInterval(timerInterval);
+}
+
+function timerReset(){
+  clearInterval(timerInterval);timerRunning=false;timerIsBreak=false;
+  timerSecs=timerDur*60;
+  document.getElementById('timer-start-btn').textContent='▶ Start';
+  document.getElementById('timer-label').textContent='Ready to focus';
+  timerRender();
+}
+
+function timerTick(){
+  timerSecs--;
+  if(timerSecs<=0){
+    clearInterval(timerInterval);timerRunning=false;
+    if(!timerIsBreak){
+      document.getElementById('timer-label').textContent='🎉 Break time! '+timerBreak+' mins';
+      document.getElementById('timer-start-btn').textContent='▶ Start Break';
+      timerIsBreak=true;timerSecs=timerBreak*60;
+      logEvent('timer_completed',currentUser?currentUser.name:'unknown',{duration:timerDur+'min'});
+      try{const a=new AudioContext();const o=a.createOscillator();const g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=523;g.gain.setValueAtTime(.3,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.8);o.start();o.stop(a.currentTime+.8);}catch(e){}
+    }else{
+      document.getElementById('timer-label').textContent='✅ All done! Great work!';
+      document.getElementById('timer-start-btn').textContent='▶ Start';
+      timerIsBreak=false;timerSecs=timerDur*60;
+    }
+  } else {
+    const phase=timerIsBreak?'Break':'Focus';
+    document.getElementById('timer-label').textContent=phase+' session in progress...';
+  }
+  timerRender();
+}
+
+function timerRender(){
+  const total=(timerIsBreak?timerBreak:timerDur)*60;
+  const pct=timerSecs/total;
+  const m=Math.floor(timerSecs/60);const s=timerSecs%60;
+  document.getElementById('timer-display').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  const ring=document.getElementById('timer-ring');
+  ring.style.strokeDashoffset=TIMER_CIRC*(1-pct);
+  const color=pct>0.5?'var(--green)':pct>0.25?'var(--yellow)':'var(--pink)';
+  ring.style.stroke=color;
+}
+
+
+// ── TASK BREAKDOWN ───────────────────────────────────────────────
+async function openBreakdown(hwId){
+  const item=hw.find(h=>h.id===hwId);if(!item)return;
+  const steps=item.steps||[];
+  const done=steps.filter(s=>s.done).length;
+  document.getElementById('modal-title-txt').textContent='🧩 Break it down: '+item.task;
+  document.getElementById('modal-body').innerHTML=`
+    <div style="margin-bottom:14px">
+      <div style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:8px">Split this task into smaller steps. Check them off one by one.</div>
+      ${steps.length?`<div style="font-size:12px;font-weight:800;color:var(--primary);margin-bottom:10px">${done}/${steps.length} steps done</div>`:''}
+    </div>
+    <div class="steps-list" id="steps-list">
+      ${steps.map((s,i)=>`
+        <div class="step-item" id="step-${i}">
+          <div class="step-chk ${s.done?'done':''}" onclick="toggleStep('${hwId}',${i})">${s.done?'✓':''}</div>
+          <div class="step-txt ${s.done?'done':''}">${s.text}</div>
+        </div>`).join('')}
+    </div>
+    ${(role!=='teacher')?`<div class="breakdown-add" style="margin-top:12px">
+      <input class="breakdown-input fi" id="step-input" placeholder="Add a step..." onkeydown="if(event.key==='Enter')addStep('${hwId}')"/>
+      <button class="btn green" style="padding:8px 14px;font-size:13px" onclick="addStep('${hwId}')">+ Add</button>
+    </div>`:''}
+  `;
+  document.getElementById('ev-modal').dataset.hwId=hwId;
+  document.getElementById('ev-modal').classList.add('open');
+}
+
+async function addStep(hwId){
+  const inp=document.getElementById('step-input');
+  const text=inp.value.trim();if(!text)return;
+  const item=hw.find(h=>h.id===hwId);if(!item)return;
+  if(!item.steps)item.steps=[];
+  item.steps.push({text,done:false});
+  try{
+    await fbSet('homework',hwId,{steps:item.steps});
+    inp.value='';
+    logEvent('task_breakdown',currentUser?currentUser.name:'unknown',{task:item.task.substring(0,30)});
+    openBreakdown(hwId);renderHW();
+  }catch(e){alert('Could not save step.');}
+}
+
+async function toggleStep(hwId,idx){
+  const item=hw.find(h=>h.id===hwId);if(!item||!item.steps)return;
+  item.steps[idx].done=!item.steps[idx].done;
+  try{await fbSet('homework',hwId,{steps:item.steps});openBreakdown(hwId);renderHW();}
+  catch(e){console.error(e);}
+}
+
+function setMobNav(el){
+  document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
 
 // ── QUOTES ──────────────────────────────────────────────────────
 const QUOTES=[
@@ -1103,7 +1466,7 @@ async function saveMood(){
   if(!curMood){alert('Pick a mood first!');return;}
   const focus=parseInt(document.getElementById('focus-slider').value);
   const entry={mood:curMood,emoji:curMoodEm,focus,date:new Date().toISOString(),quote:curQuote||null};
-  try{const ref=await fbAdd('moodLog',entry);moodL.unshift({id:ref.id,...entry});document.getElementById('greet-emoji').innerHTML=curMoodEm;renderMoodLog();updDash();alert('Mood saved!');}
+  try{const ref=await fbAdd('moodLog',entry);moodL.unshift({id:ref.id,...entry});document.getElementById('greet-emoji').innerHTML=curMoodEm;logEvent('mood_logged',currentUser?currentUser.name:'unknown',{mood:curMood,focus});renderMoodLog();updDash();alert('Mood saved!');}
   catch(e){alert('Could not save.');}
 }
 function renderMoodLog(){
@@ -1213,7 +1576,10 @@ function changePin(who){
   else{np=document.getElementById('new-tc-pin').value;confirm=document.getElementById('con-tc-pin').value;}
   if(np.length!==4||!/^\d{4}$/.test(np)){msgEl.style.color='var(--pink)';msgEl.textContent='PIN must be exactly 4 digits.';return;}
   if(np!==confirm&&who!=='parent'){msgEl.style.color='var(--pink)';msgEl.textContent='PINs do not match.';return;}
-  PINS[who]=np;localStorage.setItem('pin_'+who,np);
+  // Store by name for named profiles
+  if(who==='student')localStorage.setItem('pin_T',np);
+  else if(who==='parent'&&currentUser)localStorage.setItem('pin_'+currentUser.name,np);
+  else localStorage.setItem('pin_'+who,np);
   msgEl.style.color='var(--green)';msgEl.textContent='PIN updated!';
 }
 
