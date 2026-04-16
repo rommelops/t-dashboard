@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&family=Comic+Neue:wght@400;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, doc, setDoc, collection, getDocs, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   const firebaseConfig = {
     apiKey: "AIzaSyDJIEjfC01LYMqm3k4lkN_-KylLcEtytIc",
     authDomain: "t-dashboard-493420.firebaseapp.com",
@@ -20,7 +20,7 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   window._db = db;
-  window._firebase = { doc, setDoc, collection, getDocs, addDoc, deleteDoc };
+  window._firebase = { doc, getDoc, setDoc, collection, getDocs, addDoc, deleteDoc };
   window._firebaseReady = true;
   document.dispatchEvent(new Event('firebaseReady'));
 </script>
@@ -708,7 +708,7 @@ function parseCSV(text){
 async function parseRows(rows){
   const h=rows[0].map(x=>x.toLowerCase().trim());
   const ix={date:h.indexOf('date'),subject:h.indexOf('subject'),type:h.indexOf('type'),assignment:h.indexOf('assignment'),due_date:h.indexOf('due_date'),priority:h.indexOf('priority'),notes:h.indexOf('notes')};
-  calEv={};const tn=[];const fbWrites=[];
+  calEv={};const tn=[];const candidates=[];
   for(let r=1;r<rows.length;r++){
     const row=rows[r];const g=i=>(i>=0&&i<row.length)?row[i].trim():'';
     const asgn=g(ix.assignment);if(!asgn)continue;
@@ -717,22 +717,31 @@ async function parseRows(rows){
     const en={subject:g(ix.subject),type:g(ix.type),assignment:asgn,dueDate,priority:g(ix.priority)||'medium',notes:g(ix.notes),fromSheet:true};
     if(!calEv[dk])calEv[dk]=[];calEv[dk].push(en);
     if(en.notes)tn.push({title:en.subject+' — '+g(ix.date),body:en.notes,date:g(ix.date)});
-    // Write to Firebase only if not already there — preserves done state and userNotes
-    const fbId=hwIdForAssignment(asgn,dueDate);
-    const exists=hw.find(h=>h.id===fbId);
-    if(!exists){
-      fbWrites.push({id:fbId,task:asgn,subject:g(ix.subject),dueDate,priority:g(ix.priority)||'medium',sheetNotes:g(ix.notes),done:false,fromSheet:true,userNotes:[],createdAt:Date.now()});
-    }
+    candidates.push({id:hwIdForAssignment(asgn,dueDate),task:asgn,subject:g(ix.subject),dueDate,priority:g(ix.priority)||'medium',sheetNotes:g(ix.notes)});
   }
   localStorage.setItem('calEv',JSON.stringify(calEv));
   localStorage.setItem('tcNotes',JSON.stringify(tn));
-  // Batch write new items to Firebase
-  for(const item of fbWrites){
+  // For each candidate, check Firebase directly — never rely on in-memory hw array
+  const {doc,getDoc,setDoc}=window._firebase;
+  for(const c of candidates){
     try{
-      const {doc,setDoc}=window._firebase;
-      await setDoc(doc(window._db,'students',FID,'homework',item.id),item);
-      hw.push(item);
-    }catch(e){console.error('FB write error:',e);}
+      const ref=doc(window._db,'students',FID,'homework',c.id);
+      const snap=await getDoc(ref);
+      if(!snap.exists()){
+        // New item — write fresh, preserve nothing
+        const item={id:c.id,task:c.task,subject:c.subject,dueDate:c.dueDate,priority:c.priority,sheetNotes:c.sheetNotes,done:false,fromSheet:true,userNotes:[],createdAt:Date.now()};
+        await setDoc(ref,item);
+        // Add to in-memory array only if not already there
+        if(!hw.find(h=>h.id===c.id))hw.push(item);
+      } else {
+        // Already exists — update sheet fields only, never touch done/userNotes
+        await setDoc(ref,{subject:c.subject,sheetNotes:c.sheetNotes,priority:c.priority},{merge:true});
+        // Sync in-memory record too
+        const existing=hw.find(h=>h.id===c.id);
+        if(existing){existing.subject=c.subject;existing.sheetNotes=c.sheetNotes;existing.priority=c.priority;}
+        else{hw.push({id:c.id,...snap.data()});}
+      }
+    }catch(e){console.error('FB sync error:',e);}
   }
 }
 
