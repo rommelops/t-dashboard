@@ -331,7 +331,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
         <option value="T">🎒 T</option>
         <option value="Rommel">👨‍👩‍👧 Rommel</option>
         <option value="Renee">👨‍👩‍👧 Renee</option>
-        <option value="Deb">🧠 Deb</option>
+        <option value="Deb">🌱 Deb</option>
         <option value="Max">🏫 Max</option>
         <option value="Emily">🏫 Emily</option>
         <option value="Henry">🏫 Henry</option>
@@ -342,10 +342,10 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
       <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
     </div>
     <div class="pin-keypad">
-      <button class="pin-key" onclick="pp('1')">1</button><button class="pin-key" onclick="pp('2')">2</button><button class="pin-key" onclick="pp('3')">3</button>
-      <button class="pin-key" onclick="pp('4')">4</button><button class="pin-key" onclick="pp('5')">5</button><button class="pin-key" onclick="pp('6')">6</button>
-      <button class="pin-key" onclick="pp('7')">7</button><button class="pin-key" onclick="pp('8')">8</button><button class="pin-key" onclick="pp('9')">9</button>
-      <button class="pin-key empty"></button><button class="pin-key" onclick="pp('0')">0</button><button class="pin-key del" onclick="pd()">⌫</button>
+      <button type="button" class="pin-key" onclick="pp('1')">1</button><button type="button" class="pin-key" onclick="pp('2')">2</button><button type="button" class="pin-key" onclick="pp('3')">3</button>
+      <button type="button" class="pin-key" onclick="pp('4')">4</button><button type="button" class="pin-key" onclick="pp('5')">5</button><button type="button" class="pin-key" onclick="pp('6')">6</button>
+      <button type="button" class="pin-key" onclick="pp('7')">7</button><button type="button" class="pin-key" onclick="pp('8')">8</button><button type="button" class="pin-key" onclick="pp('9')">9</button>
+      <button type="button" class="pin-key empty" disabled></button><button type="button" class="pin-key" onclick="pp('0')">0</button><button type="button" class="pin-key del" onclick="pd()">⌫</button>
     </div>
     <div class="pin-error" id="pin-err"></div>
     <p class="pin-hint">Select your name first, then enter your PIN</p>
@@ -692,7 +692,15 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;b
 const SHEET_ID_DEFAULT='10VyvPxVKXRM3fbg5b3sy2MANACKP-ehp3OFEbei2dMQ';
 const FID='student_main';
 
-const TEAM=[{"name": "T", "role": "student", "pin": "1234", "initials": "T", "emoji": "\ud83c\udf92"}, {"name": "Rommel", "role": "parent", "pin": "9999", "initials": "RO", "emoji": "\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67"}, {"name": "Renee", "role": "parent", "pin": "8888", "initials": "RE", "emoji": "\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67"}, {"name": "Deb", "role": "counselor", "pin": "7777", "initials": "DB", "emoji": "\ud83e\udde0"}, {"name": "Max", "role": "teacher", "pin": "5678", "initials": "MX", "emoji": "\ud83c\udfeb"}, {"name": "Emily", "role": "teacher", "pin": "5679", "initials": "EM", "emoji": "\ud83c\udfeb"}, {"name": "Henry", "role": "teacher", "pin": "5680", "initials": "HN", "emoji": "\ud83c\udfeb"}];
+const TEAM=[
+  {name:'T',      role:'student',   pin:localStorage.getItem('pin_T')    ||'1234', initials:'T',  emoji:'🎒'},
+  {name:'Rommel', role:'parent',    pin:localStorage.getItem('pin_Rommel')||'9999', initials:'RO', emoji:'👨‍👩‍👧'},
+  {name:'Renee',  role:'parent',    pin:localStorage.getItem('pin_Renee') ||'8888', initials:'RE', emoji:'👨‍👩‍👧'},
+  {name:'Deb',    role:'counselor', pin:localStorage.getItem('pin_Deb')   ||'7777', initials:'DB', emoji:'🌱'},
+  {name:'Max',    role:'teacher',   pin:localStorage.getItem('pin_Max')   ||'5678', initials:'MX', emoji:'🏫'},
+  {name:'Emily',  role:'teacher',   pin:localStorage.getItem('pin_Emily') ||'5679', initials:'EM', emoji:'🏫'},
+  {name:'Henry',  role:'teacher',   pin:localStorage.getItem('pin_Henry') ||'5680', initials:'HN', emoji:'🏫'},
+];
 
 let currentUser=null,pinBuf='';
 let role='student';
@@ -703,19 +711,19 @@ function wfb(cb){if(window._firebaseReady)cb();else document.addEventListener('f
 
 function onNameSelect(){
   const name=document.getElementById('name-select').value;
+  pinBuf='';updDots();document.getElementById('pin-err').textContent='';
   if(!name){currentUser=null;document.getElementById('pin-emoji-icon').textContent='🎒';return;}
   const user=TEAM.find(u=>u.name===name);
-  if(!user)return;
+  if(!user){currentUser=null;return;}
   currentUser=user;
   document.getElementById('pin-emoji-icon').textContent=user.emoji;
-  pinBuf='';updDots();document.getElementById('pin-err').textContent='';
 }
 function pp(d){
   if(pinBuf.length>=4)return;
-  // Ensure select doesn't steal input
   const sel=document.getElementById('name-select');
   if(document.activeElement===sel)sel.blur();
-  pinBuf+=d;updDots();
+  pinBuf+=d;
+  updDots();
   if(pinBuf.length===4)setTimeout(checkPin,200);
 }
 function pd(){pinBuf=pinBuf.slice(0,-1);updDots();document.getElementById('pin-err').textContent='';}
@@ -724,6 +732,7 @@ function randEmoji(){return PIN_EMOJIS[Math.floor(Math.random()*PIN_EMOJIS.lengt
 function updDots(){
   for(let i=0;i<4;i++){
     const el=document.getElementById('d'+i);
+    if(!el)continue;
     const filled=i<pinBuf.length;
     el.classList.toggle('filled',filled);
     el.textContent=filled?randEmoji():'';
@@ -731,8 +740,7 @@ function updDots(){
 }
 function checkPin(){
   if(!currentUser){document.getElementById('pin-err').textContent='Please select your name first ☝️';pinBuf='';updDots();return;}
-  const storedPin=localStorage.getItem('pin_'+currentUser.name)||currentUser.pin;
-  if(pinBuf===storedPin){
+  if(pinBuf===currentUser.pin){
     role=currentUser.role;
     document.getElementById('pin-screen').style.display='none';
     document.getElementById('app').style.display='block';
