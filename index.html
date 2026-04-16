@@ -1241,7 +1241,7 @@ function renderInsights(){
   const moods=usageLogs.filter(l=>l.event==='mood_logged');
   const timers=usageLogs.filter(l=>l.event==='timer_completed');
   document.getElementById('insight-stats').innerHTML=[
-    {n:todayLogs.length,l:'Today's events'},
+    {n:todayLogs.length,l:"Today's events"},
     {n:logins.length,l:'Total logins'},
     {n:hwDone.length,l:'Tasks completed'},
     {n:moods.length,l:'Mood entries'},
